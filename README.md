@@ -8,11 +8,17 @@ The routines and functions present are the result of surfing the World Wide Web 
 No idea yet if this monster is alive.
 
 Should send
+
 • 8 on/off gates (bool), 
+
 • 8 note-on velocities (14 bit mapped), 
+
 • channel pitchbend (14 bit), 
+
 • channel modwheel (14 bit mapped) and 
+
 • channel aftertouch (14 bit mapped) 
-as PWM voltages at 19 GPIO output pins for use with "classic" analog VCOs. 
+
+as PWM voltages at 19 GPIO output pins. 
 
 Uses two Adafruit MCP 4728 boards to send 12 bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
