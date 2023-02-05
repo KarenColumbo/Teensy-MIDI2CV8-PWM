@@ -29,7 +29,7 @@ void FillNoteVoltArray(){ // Calculate 12 bit DAC voltages
   for(int i = 1; i < 85; i++){
     float frequency = noteFreq[i];
     int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
-    noteVolt[i] = (float)twelveBitVoltage/4095.0 * 5.0; 
+    noteVolt[i] = (float)twelveBitVoltage/4095.0 * 5.0; // DAC Vref = 5.0 volts!
   }
 }
 
