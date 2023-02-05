@@ -30,3 +30,5 @@ Will likely need buffering and filtering.
 MIDI pitch bend is just translated into PWM voltage instead of factoring it into the note frequencies. At 12 bit there's likely to be audible "digital steps", so I deemed it easier to just feed a CV In pin on the respective VCO - and maybe VCF cut-off.
 
 Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware.
+
+If you want to buy me a beer to get going (maybe my struggling helps other n00bs in need), you could do so here and earn my undying gratitude: https://www.buymeacoffee.com/synthiy
