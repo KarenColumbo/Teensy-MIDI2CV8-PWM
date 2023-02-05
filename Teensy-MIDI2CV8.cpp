@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <MIDI.h>
 #include <Adafruit_MCP4728.h>
+#include <SoftwareSerial.h>
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
@@ -19,8 +20,11 @@ const float noteFreq[85]={
   4186.0090
 };
 
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+
+float noteVolt[85];
+
 void FillNoteVoltArray(){
-  float noteVolt[85];
   noteVolt[0] = 0.0;
   for(int i = 1; i < 85; i++){
     float frequency = noteFreq[i];
@@ -103,22 +107,9 @@ void noteOff(uint8_t noteNumber) {
 
 // ----------------------------------------------- MAIN SETUP ------------------------------------------
 void setup() {
-  
-  // Initialize I2C communication
-  Wire.begin(400000);
-  Adafruit_MCP4728 dac1;
-  Adafruit_MCP4728 dac2;
-  dac1.begin();
-  dac2.begin();
 
   // Set 14 bits for bender, modwheel, and aftertouch
   analogWriteResolution(14);
-
-  // Initialize GPIO pins
-  initialize_GPIO();
-}
-
-void initialize_GPIO() {
   pinMode(30, OUTPUT); // Gate 08
   pinMode(29, OUTPUT); // Gate 07
   pinMode(28, OUTPUT); // Gate 06
@@ -139,11 +130,6 @@ void initialize_GPIO() {
   pinMode(5, OUTPUT); // Aftertouch out
   pinMode(4, OUTPUT); // Pitchbend out
 }
-
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
-// Initialize serial MIDI input on UART pin
-MIDI.begin(Serial1);
-Serial.begin(115200);
 
 //------------------------------------ MAIN LOOP ----------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -186,28 +172,29 @@ void loop() {
     }
 
     // ----------------------- GPIO Outputs ----------------
-    void GPIOout() {
-      for (int i = 0; i < NUM_VOICES; i++) {
-        // Output gate
-        digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
-        // Output velocity
-        analogWrite(14 - i, voices[i].velocity);
-      }
+    for (int i = 0; i < NUM_VOICES; i++) {
+      // Output gate
+      digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
+      // Output velocity
+      analogWrite(14 - i, voices[i].velocity);
     }
   }
 
   // --------------------Write note frequs to DAC boards. ---------------------
   // ****************** WARNING: Connect VDD to 5 volts!!! **********************
-  void writeNoteFreqVoltages(){
-    const int ADCChans[] = {MCP4728_CHANNEL_A, MCP4728_CHANNEL_B, MCP4728_CHANNEL_C, MCP4728_CHANNEL_D, MCP4728_CHANNEL_A, MCP4728_CHANNEL_B, MCP4728_CHANNEL_C, MCP4728_CHANNEL_D};
-    for (int i = 0; i < NUM_VOICES; i++){
-      float noteNum = voices[i].noteNumber;
-      float baseFreq = noteFreq[(int)noteNum];
-      if (i < 4){
-        dac1.setChannelValue(ADCChans[i], noteVolt[baseFreq], MCP4728_VREF_VDD);
-      } else {
-        dac2.setChannelValue(ADCChans[i], noteVolt[baseFreq], MCP4728_VREF_VDD);
-      }
-    }
-  }
+  // Initialize I2C communication
+  Wire.begin(400000);
+  Adafruit_MCP4728 dac1;
+  Adafruit_MCP4728 dac2;
+  dac1.begin();
+  dac2.begin();
+
+  dac1.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[0].noteNumber], MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[1].noteNumber], MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[2].noteNumber], MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_D, noteVolt[voices[3].noteNumber], MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[4].noteNumber], MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[5].noteNumber], MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[6].noteNumber], MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_D, noteVolt[voices[7].noteNumber], MCP4728_VREF_VDD);
 }  
