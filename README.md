@@ -13,21 +13,25 @@ After some calculations it should send
 
 • 8 on/off gates (bool), 
 
-• 8 note-on velocities (14 bit mapped), 
-
 • channel pitchbend (14 bit), 
 
-• channel modwheel (14 bit mapped) and 
+• channel modwheel (14 bit mapped), and 
 
 • channel aftertouch (14 bit mapped) 
 
-as PWM voltages at 19 GPIO output pins. 
+as PWM voltages at 11 GPIO output pins. 
 
-Uses two Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 8 12-bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
 
-Will likely need buffering and filtering.
+It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
-MIDI pitch bend is just translated into PWM voltage instead of factoring it into the note frequencies. At 12 bit there's likely to be audible "digital steps", so I deemed it easier to just feed a CV In pin on the respective VCO - and maybe VCF cut-off.
+• 8 12-bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8), and 
+
+• 8 12-bit note-on velocities between 0.0 and 5.0-ish volts.
+
+
+Pitchbend, modwheel and aftertouch PWM will likely need buffering and effective low-pass filtering.
+
+MIDI pitch bend is just translated into PWM voltage instead of factoring it into the note frequencies. At 12 bit there's likely to be audible "digital steps", so I deemed it easier to just feed a CV In pin on the respective VCO - and maybe VCF cut-off. COuld be I need a fifth MCP4728 for the controller outputs - don't know how crappy the PWM stuff looks on scope.
 
 Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware.
 
