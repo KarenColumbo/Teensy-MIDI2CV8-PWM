@@ -7,7 +7,7 @@ The routines and functions present are the result of surfing the World Wide Web 
 
 No idea yet if this monster is alive.
 
-It should read incoming serial MIDI data (UART) into a voice buffer array with oldest note and note-off stealing, utilizing the millis() function as note age stamps.
+It should read incoming serial MIDI data (UART) into a voice buffer array with oldest note and note-off stealing, utilizing the millis() function as note age stamp.
 
 After some calculations it should send
 
