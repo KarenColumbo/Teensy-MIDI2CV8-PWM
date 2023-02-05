@@ -7,7 +7,9 @@ The routines and functions present are the result of surfing the World Wide Web 
 
 No idea yet if this monster is alive.
 
-Should send
+It should read incoming serial MIDI data (UART) into a voice buffer array with oldest note and note-off stealing, utilizing the millis() function as note age stamps.
+
+After some calculations it should send
 
 • 8 on/off gates (bool), 
 
@@ -24,3 +26,7 @@ as PWM voltages at 19 GPIO output pins.
 Uses two Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 8 12-bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
 
 Will likely need buffering and filtering.
+
+MIDI pitch bend is just translated into PWM voltage instead of factoring it into the note frequencies. At 12 bit there's likely to be audible "digital steps", so I deemed it easier to just feed a CV In pin on the respective VCO - and maybe VCF cut-off.
+
+Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware.
