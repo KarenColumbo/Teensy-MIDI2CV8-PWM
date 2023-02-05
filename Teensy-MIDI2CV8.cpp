@@ -29,21 +29,6 @@ void FillNoteVoltArray(){
   }
 }
 
-
-
-// --------------------- Function to fill a DAC output voltage array with 12 bit voltages between 0 volt (= MIDI C1) and 5.0 volt (MIDI note C8)
-//float Calc12BitVolt(float frequency){   
-  // map MIDI note C1 (frequency 32.7032) to 12 bit DAC voltage value 0 and MIDI note C8 (frequency 4186.0090) to 12 bit DAC voltage value 4095 
-  //int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
-  //return twelveBitVoltage;
-//}
-//void FillNoteVoltArray(){
-//  float noteVolt[85];
-//  for(int i = 0; i < 85; i++){
-//    noteVolt[i] = Calc12BitVolt(noteFreq[i])/4095.0 * 5.0; 
-//  }
-//}
-
 // ------------------------------------- Voice buffer init --------------------------------------------------------------
 
 struct Voice {
@@ -154,15 +139,16 @@ void initialize_GPIO() {
   pinMode(4, OUTPUT); // Pitchbend out
 }
 
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+// Initialize serial MIDI input on UART pin
+MIDI.begin(Serial1);
+Serial.begin(115200);
+
 //------------------------------------ MAIN LOOP ----------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------------------------
 
 void loop() {
-  MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
-  // Initialize serial MIDI input on UART pin
-  MIDI.begin(Serial1);
-  Serial.begin(115200);
-
+  
   // ----------------------Check for incoming MIDI messages
   if (MIDI.read()) {
 
