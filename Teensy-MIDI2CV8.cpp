@@ -8,8 +8,8 @@
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
-#define PITCH_BEND_RANGE = 2; //pitchbend range in +/- semitones
-const float noteFreq[85]={
+#define PITCH_BEND_RANGE = 2; // Pitchbend range in +/- semitones
+const float noteFreq[85]={ // MIDI notes from C1 to C8
   32.7032, 34.6478, 36.7081, 38.8909, 41.2034, 43.6535, 46.2493, 48.9994, 51.9131, 55.0000, 58.2705, 61.7354, 
   65.4064, 69.2957, 73.4162, 77.7817, 82.4069, 87.3071, 92.4986, 97.9989, 103.8262, 110.0000, 116.5409, 123.4708, 
   130.8128, 138.5913, 146.8324, 155.5635, 164.8138, 174.6141, 184.9972, 195.9977, 207.6523, 220.0000, 233.0819, 246.9417, 
@@ -24,7 +24,7 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 float noteVolt[85];
 
-void FillNoteVoltArray(){
+void FillNoteVoltArray(){ // Calculate 12 bit DAC voltages
   noteVolt[0] = 0.0;
   for(int i = 1; i < 85; i++){
     float frequency = noteFreq[i];
