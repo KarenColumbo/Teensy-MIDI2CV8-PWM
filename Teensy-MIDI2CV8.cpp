@@ -101,6 +101,7 @@ void noteOff(uint8_t noteNumber) {
   }
 }
 
+// ----------------------------------------------- MAIN SETUP ------------------------------------------
 void setup() {
   
   // Initialize I2C communication
