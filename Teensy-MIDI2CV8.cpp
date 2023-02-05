@@ -2,8 +2,6 @@
 // Board Teensy 4.1
 #include <stdint.h>
 #include <Arduino.h>
-#include <SerialMIDI.h>
-#include <SoftwareSerial.h>
 #include <MIDI.h>
 #include <Adafruit_MCP4728.h>
 
@@ -21,19 +19,30 @@ const float noteFreq[85]={
   4186.0090
 };
 
-// --------------------- Function to fill a DAC output voltage array with 12 bit voltages between 0 volt (= MIDI C1) and 5.0 volt (MIDI note C8)
-float Calc12BitVolt(float frequency){   
-  // map MIDI note C1 (frequency 32.7032) to 12 bit DAC voltage value 0 and MIDI note C8 (frequency 4186.0090) to 12 bit DAC voltage value 4095 
-  int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
-  return twelveBitVoltage;
-}
-
 void FillNoteVoltArray(){
   float noteVolt[85];
-  for(int i = 0; i < 85; i++){
-    noteVolt[i] = Calc12BitVolt(noteFreq[i])/4095.0 * 5.0; 
+  noteVolt[0] = 0.0;
+  for(int i = 1; i < 85; i++){
+    float frequency = noteFreq[i];
+    int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
+    noteVolt[i] = (float)twelveBitVoltage/4095.0 * 5.0; 
   }
 }
+
+
+
+// --------------------- Function to fill a DAC output voltage array with 12 bit voltages between 0 volt (= MIDI C1) and 5.0 volt (MIDI note C8)
+//float Calc12BitVolt(float frequency){   
+  // map MIDI note C1 (frequency 32.7032) to 12 bit DAC voltage value 0 and MIDI note C8 (frequency 4186.0090) to 12 bit DAC voltage value 4095 
+  //int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
+  //return twelveBitVoltage;
+//}
+//void FillNoteVoltArray(){
+//  float noteVolt[85];
+//  for(int i = 0; i < 85; i++){
+//    noteVolt[i] = Calc12BitVolt(noteFreq[i])/4095.0 * 5.0; 
+//  }
+//}
 
 // ------------------------------------- Voice buffer init --------------------------------------------------------------
 
@@ -108,12 +117,7 @@ void noteOff(uint8_t noteNumber) {
 }
 
 void setup() {
-  MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
-
-  // Initialize serial MIDI input on UART pin
-  MIDI.begin(Serial1);
-  Serial.begin(115200);
-
+  
   // Initialize I2C communication
   Wire.begin(400000);
   Adafruit_MCP4728 dac1;
@@ -154,48 +158,54 @@ void initialize_GPIO() {
 //---------------------------------------------------------------------------------------------------------------------------------
 
 void loop() {
+  MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+  // Initialize serial MIDI input on UART pin
+  MIDI.begin(Serial1);
+  Serial.begin(115200);
+
   // ----------------------Check for incoming MIDI messages
-  MIDI.read();
+  if (MIDI.read()) {
 
-  // ------------------------Check for incoming Note On message on channel 1
-  if (MIDI.getType() == midi::NoteOn && MIDI.getChannel() == MIDI_CHANNEL) {
-    uint8_t noteNumber = MIDI.getData1();
-    uint8_t velocity = MIDI.getData2();
-    if (velocity > 0) {
-      noteOn(noteNumber, velocity);
-    } else {
-      noteOff(noteNumber);
+    // ------------------------Check for incoming Note On message on channel 1
+    if (MIDI.getType() == midi::NoteOn && MIDI.getChannel() == MIDI_CHANNEL) {
+      uint8_t noteNumber = MIDI.getData1();
+      uint8_t velocity = MIDI.getData2();
+      if (velocity > 0) {
+        noteOn(noteNumber, velocity);
+      } else {
+        noteOff(noteNumber);
+      }
     }
-  }
 
-  // ------------------------Check for incoming Pitch Bend message on channel 1
-  if (MIDI.getType() == midi::PitchBend && MIDI.getChannel() == MIDI_CHANNEL) {
-    uint16_t pitchBend = MIDI.getData1() | (MIDI.getData2() << 7);
-    int pitchBendPWM = map(pitchBend, 0, 16383, 0, 16383 << 2);
-    analogWrite(4, pitchBendPWM);
-  }
+    // ------------------------Check for incoming Pitch Bend message on channel 1
+    if (MIDI.getType() == midi::PitchBend && MIDI.getChannel() == MIDI_CHANNEL) {
+      uint16_t pitchBend = MIDI.getData1() | (MIDI.getData2() << 7);
+      int pitchBendPWM = map(pitchBend, 0, 16383, 0, 16383 << 2);
+      analogWrite(4, pitchBendPWM);
+    }
 
-  // -----------------------Check for incoming Aftertouch message on channel 1
-  if (MIDI.getType() == midi::AfterTouchChannel && MIDI.getChannel() == MIDI_CHANNEL) {
-    uint8_t aftertouch = MIDI.getData1();
-    int channelPressurePWM = map(aftertouch, 0, 127, 0, 8191 << 2);
-    analogWrite(5, channelPressurePWM);
-  }
+    // -----------------------Check for incoming Aftertouch message on channel 1
+    if (MIDI.getType() == midi::AfterTouchChannel && MIDI.getChannel() == MIDI_CHANNEL) {
+      uint8_t aftertouch = MIDI.getData1();
+      int channelPressurePWM = map(aftertouch, 0, 127, 0, 8191 << 2);
+      analogWrite(5, channelPressurePWM);
+    }
 
-  // -------------------------Check for incoming Modulation Wheel message on channel 1
-  if (MIDI.getType() == midi::ControlChange && MIDI.getData1() == 1 && MIDI.getChannel() == MIDI_CHANNEL) {
-    uint8_t modulationWheel = MIDI.getData2();
-    int modulationWheelPWM = map(modulationWheel, 0, 127, 0, 8191 << 2);
-    analogWrite(6, modulationWheelPWM);
-  }
+    // -------------------------Check for incoming Modulation Wheel message on channel 1
+    if (MIDI.getType() == midi::ControlChange && MIDI.getData1() == 1 && MIDI.getChannel() == MIDI_CHANNEL) {
+      uint8_t modulationWheel = MIDI.getData2();
+      int modulationWheelPWM = map(modulationWheel, 0, 127, 0, 8191 << 2);
+      analogWrite(6, modulationWheelPWM);
+    }
 
-  // ----------------------- GPIO Outputs ----------------
-  void GPIOout() {
-    for (int i = 0; i < NUM_VOICES; i++) {
-      // Output gate
-      digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
-      // Output velocity
-      analogWrite(14 - i, voices[i].velocity);
+    // ----------------------- GPIO Outputs ----------------
+    void GPIOout() {
+      for (int i = 0; i < NUM_VOICES; i++) {
+        // Output gate
+        digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
+        // Output velocity
+        analogWrite(14 - i, voices[i].velocity);
+      }
     }
   }
 
