@@ -136,10 +136,10 @@ void setup() {
 
 void loop() {
   
-  // ----------------------Check for incoming MIDI messages
+  // ---------------------- Serial MIDI stuff --------------------
   if (MIDI.read()) {
 
-    // ------------------------Check for incoming Note On message on channel 1
+    // ------------------------Check for and buffer incoming Note On message
     if (MIDI.getType() == midi::NoteOn && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t noteNumber = MIDI.getData1();
       uint8_t velocity = MIDI.getData2();
@@ -150,28 +150,28 @@ void loop() {
       }
     }
 
-    // ------------------------Check for incoming Pitch Bend message on channel 1
+    // ------------------------Check for and write incoming Pitch Bend 
     if (MIDI.getType() == midi::PitchBend && MIDI.getChannel() == MIDI_CHANNEL) {
       uint16_t pitchBend = MIDI.getData1() | (MIDI.getData2() << 7);
       int pitchBendPWM = map(pitchBend, 0, 16383, 0, 16383 << 2);
       analogWrite(4, pitchBendPWM);
     }
 
-    // -----------------------Check for incoming Aftertouch message on channel 1
+    // -----------------------Check for and write incoming Aftertouch 
     if (MIDI.getType() == midi::AfterTouchChannel && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t aftertouch = MIDI.getData1();
       int channelPressurePWM = map(aftertouch, 0, 127, 0, 8191 << 2);
       analogWrite(5, channelPressurePWM);
     }
 
-    // -------------------------Check for incoming Modulation Wheel message on channel 1
+    // -------------------------Check for and write incoming Modulation Wheel 
     if (MIDI.getType() == midi::ControlChange && MIDI.getData1() == 1 && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t modulationWheel = MIDI.getData2();
       int modulationWheelPWM = map(modulationWheel, 0, 127, 0, 8191 << 2);
       analogWrite(6, modulationWheelPWM);
     }
 
-    // ----------------------- GPIO Outputs ----------------
+    // ----------------------- Write gates and velocity outputs ----------------
     for (int i = 0; i < NUM_VOICES; i++) {
       // Output gate
       digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
@@ -180,7 +180,7 @@ void loop() {
     }
   }
 
-  // --------------------Write note frequs to DAC boards. ---------------------
+  // --------------------Write note frequencies to DAC boards. ---------------------
   // ****************** WARNING: Connect VDD to 5 volts!!! **********************
   // Initialize I2C communication
   Wire.begin(400000);
