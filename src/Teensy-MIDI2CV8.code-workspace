@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../../Teensy41/Teensy-MIDI2CV8/Teensy-MIDI2CV8"
+		},
+		{
+			"name": "Teensy-MIDI2CV8",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
