@@ -20,13 +20,31 @@ const float noteFreq[85]={ // MIDI notes from C1 to C8
   4186.0090
 };
 
+const float veloVolt[128]={
+  0.000000, 0.039063, 0.078125, 0.117188, 0.156250, 0.195313, 0.234375, 0.273438,
+  0.312500, 0.351563, 0.390625, 0.429688, 0.468750, 0.507813, 0.546875, 0.585938,
+  0.625000, 0.664063, 0.703125, 0.742188, 0.781250, 0.820313, 0.859375, 0.898438,
+  0.937500, 0.976563, 1.015625, 1.054688, 1.093750, 1.132813, 1.171875, 1.210938,
+  1.250000, 1.289063, 1.328125, 1.367188, 1.406250, 1.445313, 1.484375, 1.523438,
+  1.562500, 1.601563, 1.640625, 1.679688, 1.718750, 1.757813, 1.796875, 1.835938,
+  1.875000, 1.914063, 1.953125, 1.992188, 2.031250, 2.070313, 2.109375, 2.148438,
+  2.187500, 2.226563, 2.265625, 2.304688, 2.343750, 2.382813, 2.421875, 2.460938,
+  2.500000, 2.539063, 2.578125, 2.617188, 2.656250, 2.695313, 2.734375, 2.773438,
+  2.812500, 2.851563, 2.890625, 2.929688, 2.968750, 3.007813, 3.046875, 3.085938,
+  3.125000, 3.164063, 3.203125, 3.242188, 3.281250, 3.320313, 3.359375, 3.398438,
+  3.437500, 3.476563, 3.515625, 3.554688, 3.593750, 3.632813, 3.671875, 3.710938,
+  3.750000, 3.789063, 3.828125, 3.867188, 3.906250, 3.945313, 3.984375, 4.023438,
+  4.062500, 4.101563, 4.140625, 4.179688, 4.218750, 4.257813, 4.296875, 4.335938,
+  4.375000, 4.414063, 4.453125, 4.492188, 4.531250, 4.570313, 4.609375, 4.648438
+};
+
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 float noteVolt[85];
 
 void FillNoteVoltArray(){ // Calculate 12 bit DAC voltages
   noteVolt[0] = 0.0;
-  for(int i = 1; i < 85; i++){
+  for (int i = 1; i < 85; i++) {
     float frequency = noteFreq[i];
     int twelveBitVoltage = 4095 * (log2(frequency) - log2(32.7032));
     noteVolt[i] = (float)twelveBitVoltage/4095.0 * 5.0; // DAC Vref = 5.0 volts!
@@ -108,12 +126,17 @@ void noteOff(uint8_t noteNumber) {
 
 Adafruit_MCP4728 dac1;
 Adafruit_MCP4728 dac2;
+Adafruit_MCP4728 dac3;
+Adafruit_MCP4728 dac4;
 
 // ----------------------------------------------- MAIN SETUP ------------------------------------------
 void setup() {
   dac1.begin(0x60);
   dac2.begin(0x61);
+  dac1.begin(0x62);
+  dac2.begin(0x63);
  
+
   // ****************** WARNING: Connect VDD to 5 volts!!! **********************
   // Wiring:
   // Teensy 4.1 --> DAC1
@@ -135,14 +158,6 @@ void setup() {
   pinMode(25, OUTPUT); // Gate 03
   pinMode(24, OUTPUT); // Gate 02
   pinMode(23, OUTPUT); // Gate 01
-  pinMode(14, OUTPUT); // Velocity 08
-  pinMode(13, OUTPUT); // Velocity 07
-  pinMode(12, OUTPUT); // Velocity 06
-  pinMode(11, OUTPUT); // Velocity 05
-  pinMode(10, OUTPUT); // Velocity 04
-  pinMode(9, OUTPUT); // Velocity 03
-  pinMode(8, OUTPUT); // Velocity 02
-  pinMode(7, OUTPUT); // Velocity 01
   pinMode(6, OUTPUT); // Modwheel out
   pinMode(5, OUTPUT); // Aftertouch out
   pinMode(4, OUTPUT); // Pitchbend out
@@ -192,12 +207,20 @@ void loop() {
     for (int i = 0; i < NUM_VOICES; i++) {
       // Output gate
       digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
-      // Output velocity
-      analogWrite(14 - i, voices[i].velocity);
     }
   }
 
-  // --------------------Write note frequencies to DAC boards. ---------------------
+  // --------------------- Write velocity voltages to DAC boards -----------------
+  dac3.setChannelValue(MCP4728_CHANNEL_A, veloVolt[voices[0].velocity], MCP4728_VREF_VDD);
+  dac3.setChannelValue(MCP4728_CHANNEL_B, veloVolt[voices[1].velocity], MCP4728_VREF_VDD);
+  dac3.setChannelValue(MCP4728_CHANNEL_C, veloVolt[voices[2].velocity], MCP4728_VREF_VDD);
+  dac3.setChannelValue(MCP4728_CHANNEL_D, veloVolt[voices[3].velocity], MCP4728_VREF_VDD);
+  dac4.setChannelValue(MCP4728_CHANNEL_A, veloVolt[voices[4].velocity], MCP4728_VREF_VDD);
+  dac4.setChannelValue(MCP4728_CHANNEL_B, veloVolt[voices[5].velocity], MCP4728_VREF_VDD);
+  dac4.setChannelValue(MCP4728_CHANNEL_C, veloVolt[voices[6].velocity], MCP4728_VREF_VDD);
+  dac4.setChannelValue(MCP4728_CHANNEL_D, veloVolt[voices[7].velocity], MCP4728_VREF_VDD);
+  
+  // -------------------- Write note frequency voltages to DAC boards ---------------------
   dac1.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[0].noteNumber], MCP4728_VREF_VDD);
   dac1.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[1].noteNumber], MCP4728_VREF_VDD);
   dac1.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[2].noteNumber], MCP4728_VREF_VDD);
