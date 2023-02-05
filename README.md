@@ -13,6 +13,6 @@ Should send
 • channel pitchbend (14 bit), 
 • channel modwheel (14 bit mapped) and 
 • channel aftertouch (14 bit mapped) 
-as PWM voltages for use with "classic" analog VCOs. 
+as PWM voltages at 19 GPIO output pins for use with "classic" analog VCOs. 
 
 Uses two Adafruit MCP 4728 boards to send 12 bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
