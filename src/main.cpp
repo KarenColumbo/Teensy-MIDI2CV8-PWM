@@ -102,12 +102,29 @@ void noteOff(uint8_t noteNumber) {
   int voice = findVoice(noteNumber);
   if (voice != -1) {
     voices[voice].noteOn = false;
+    voices[voice].velocity = 0;
   }
 }
 
+Adafruit_MCP4728 dac1;
+Adafruit_MCP4728 dac2;
+
 // ----------------------------------------------- MAIN SETUP ------------------------------------------
 void setup() {
-
+  dac1.begin(0x60);
+  dac2.begin(0x61);
+ 
+  // ****************** WARNING: Connect VDD to 5 volts!!! **********************
+  // Wiring:
+  // Teensy 4.1 --> DAC1
+  // Pin 16 (SCL) --> SCL
+  // Pin 17 (SDA) --> SDA
+  // Teensy 4.1 --> DAC2
+  // Pin 20 (SCL1) --> SCL
+  // Pin 21 (SDA1) --> SDA
+  // Initialize I2C communication
+  Wire.begin(400000);
+  
   // Set 14 bits for bender, modwheel, and aftertouch
   analogWriteResolution(14);
   pinMode(30, OUTPUT); // Gate 08
@@ -181,14 +198,6 @@ void loop() {
   }
 
   // --------------------Write note frequencies to DAC boards. ---------------------
-  // ****************** WARNING: Connect VDD to 5 volts!!! **********************
-  // Initialize I2C communication
-  Wire.begin(400000);
-  Adafruit_MCP4728 dac1;
-  Adafruit_MCP4728 dac2;
-  dac1.begin();
-  dac2.begin();
-
   dac1.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[0].noteNumber], MCP4728_VREF_VDD);
   dac1.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[1].noteNumber], MCP4728_VREF_VDD);
   dac1.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[2].noteNumber], MCP4728_VREF_VDD);
@@ -197,4 +206,4 @@ void loop() {
   dac2.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[5].noteNumber], MCP4728_VREF_VDD);
   dac2.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[6].noteNumber], MCP4728_VREF_VDD);
   dac2.setChannelValue(MCP4728_CHANNEL_D, noteVolt[voices[7].noteNumber], MCP4728_VREF_VDD);
-}  
+}
