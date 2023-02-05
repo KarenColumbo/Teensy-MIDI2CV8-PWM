@@ -21,4 +21,6 @@ Should send
 
 as PWM voltages at 19 GPIO output pins. 
 
-Uses two Adafruit MCP 4728 boards to send 8 12-bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
+Uses two Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 8 12-bit note CV voltages from 0V (MIDI note C1) to 5.0V (MIDI note C8).
+
+Will likely need buffering and filtering.
