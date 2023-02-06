@@ -30,33 +30,37 @@ const float veloVolt[128]={
   3840, 3872, 3904, 3936, 3968, 4000, 4032, 4064
 };
 
-//const int MIDI_NOTE_C1 = 24;
-//const int NUM_NOTES = 90;
-//const float SEMITONE_PITCH_CHANGE = 0.055;
-//const float VREF = 5.0;
-//const int DAC_BITS = 12;
-//const float A4_FREQUENCY = 440.0;
-//void fill_note_freq_array(unsigned int noteVolt[], float tuning_frequency) {
-//  float semitone_pitch_change = (tuning_frequency / A4_FREQUENCY) * SEMITONE_PITCH_CHANGE;
-//  for (int i = 0; i < NUM_NOTES; i++) {
-//    float vcontrol = i * semitone_pitch_change;
-//    noteVolt[i] = (unsigned int)round(vcontrol / VREF * (pow(2, DAC_BITS) - 1));
+//const int N_NOTES = 60; // number of notes in the range
+//const int MIDI_LOWEST = 36; // MIDI note number for C2
+//const int MIDI_HIGHEST = 96; // MIDI note number for C7
+//const float V_LOWEST = 0.0; // lowest voltage in the range
+//const float V_RANGE = 5.0; // voltage range in volts
+//const int DAC_MAX = 4095; // maximum value for 12-bit DAC
+//int noteVolts[N_NOTES];
+//void fillNoteVoltsArray() {
+//  for (int i = 0; i < N_NOTES; i++) {
+//    noteVolts[i] = round((V_LOWEST + (i * (V_RANGE / N_NOTES))) / V_RANGE * DAC_MAX);
 //  }
 //}
+//int main() {
+//  fillNoteVoltsArray();
+//  for (int i = 0; i < N_NOTES; i++) {
+//    std::cout << noteVolts[i];
+//    if (i < N_NOTES - 1) {
+//      std::cout << ", ";
+//    }
+//  }
+//  std::cout << std::endl;
+//  return 0;
+//}
+//}
 
-const unsigned int noteVolt[90] = {
-  0, 45, 90, 135, 180, 225, 270, 315, 
-  360, 405, 450, 495, 541, 586, 631, 676, 
-  721, 766, 811, 856, 901, 946, 991, 1036, 
-  1081, 1126, 1171, 1216, 1261, 1306, 1351, 1396, 
-  1441, 1486, 1532, 1577, 1622, 1667, 1712, 1757, 
-  1802, 1847, 1892, 1937, 1982, 2027, 2072, 2117, 
-  2162, 2207, 2252, 2297, 2342, 2387, 2432, 2477, 
-  2523, 2568, 2613, 2658, 2703, 2748, 2793, 2838, 
-  2883, 2928, 2973, 3018, 3063, 3108, 3153, 3198, 
-  3243, 3288, 3333, 3378, 3423, 3468, 3514, 3559, 
-  3604, 3649, 3694, 3739, 3784, 3829, 3874, 3919, 
-  3964, 4009
+const unsigned int noteVolt[61] = {
+  0, 68, 137, 205, 273, 341, 410, 478, 546, 614, 683, 751, 
+  819, 887, 956, 1024, 1092, 1160, 1229, 1297, 1365, 1433, 1502, 1570, 
+  1638, 1706, 1775, 1843, 1911, 1979, 2048, 2116, 2184, 2252, 2321, 2389, 
+  2457, 2525, 2594, 2662, 2730, 2798, 2867, 2935, 3003, 3071, 3140, 3208, 
+  3276, 3344, 3413, 3481, 3549, 3617, 3686, 3754, 3822, 3890, 3959, 4027, 4095
   };
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
