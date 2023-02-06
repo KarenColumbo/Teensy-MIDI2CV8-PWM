@@ -8,9 +8,10 @@
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
-#define PITCH_BEND_RANGE = 2; // Pitchbend range in +/- semitones
+#define PITCH_POS = 2; // Pitchbend range in +/- benderValue
+#define PITCH_NEG = -2
 
-// --------------------------------- Velocity Voltages -------------------------------------------
+// --------------------------------- Velocity Voltages 
 const float veloVolt[128]={
   0, 32, 64, 96, 128, 160, 192, 224, 
   256, 288, 320, 352, 384, 416, 448, 480, 
@@ -55,6 +56,7 @@ const float veloVolt[128]={
 //}
 //}
 
+// ----------------------------- 12 bit DAC for 1V/oct C2-C7
 const unsigned int noteVolt[61] = {
   0, 68, 137, 205, 273, 341, 410, 478, 546, 614, 683, 751, 
   819, 887, 956, 1024, 1092, 1160, 1229, 1297, 1365, 1433, 1502, 1570, 
@@ -65,20 +67,19 @@ const unsigned int noteVolt[61] = {
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
-uint16_t semitones = 0;
+uint16_t benderValue = 0;
 
-// ------------------------------------- Voice buffer init --------------------------------------------------------------
-
+// ------------------------------------- Voice buffer init 
 struct Voice {
   unsigned long noteAge;
   uint8_t noteNumber;
-	bool noteOn;
+  bool noteOn;
   uint8_t velocity;
   uint16_t pitchBend;
   uint8_t channelPressure;
   uint8_t modulationWheel;
   uint8_t prevNoteNumber;
-  uint16_t bendVolts;
+  uint16_t bendedNote;
 };
 
 Voice voices[NUM_VOICES];
@@ -93,11 +94,11 @@ void initializeVoices() {
     voices[i].channelPressure = 0;
     voices[i].modulationWheel = 0;
     voices[i].prevNoteNumber = 0;
-    voices[i].bendVolts = 0x2000;
+    voices[i].bendedNote = 0x2000;
   }
 }
 
-// ------------------------------------------ Voice buffer subroutines --------------------------------------------------------
+// ------------------------------------------ Voice buffer subroutines 
 
 int findOldestVoice() {
   int oldestVoice = 0;
@@ -147,20 +148,19 @@ Adafruit_MCP4728 dac2;
 Adafruit_MCP4728 dac3;
 Adafruit_MCP4728 dac4;
 
-// ----------------------------------------------- MAIN SETUP ------------------------------------------
+// ----------------------------------------------- MAIN SETUP 
 void setup() {
   dac1.begin(0x60);
   dac2.begin(0x61);
   dac1.begin(0x62);
   dac2.begin(0x63);
- 
 
-  // ****************** WARNING: Connect VDD to 5 volts!!! **********************
+  // ****************** WARNING: Connect VDD to 5 volts!!! 
   // Wiring:
-  // Teensy 4.1 --> DAC1
+  // Teensy 4.1 --> DAC1, DAC2
   // Pin 16 (SCL) --> SCL
   // Pin 17 (SDA) --> SDA
-  // Teensy 4.1 --> DAC2
+  // Teensy 4.1 --> DAC3, DAC4
   // Pin 20 (SCL1) --> SCL
   // Pin 21 (SDA1) --> SDA
   // Initialize I2C communication
@@ -181,12 +181,11 @@ void setup() {
   pinMode(4, OUTPUT); // Pitchbend out
 }
 
-//------------------------------------ MAIN LOOP ----------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------ MAIN LOOP 
 
 void loop() {
   
-  // ---------------------- Serial MIDI stuff --------------------
+  // ---------------------- Serial MIDI stuff 
   if (MIDI.read()) {
 
     // ------------------------Check for and buffer incoming Note On message
@@ -200,15 +199,15 @@ void loop() {
       }
     }
 
-    // ------------------------Check for and write incoming Pitch Bend 
+    // ------------------ Check for and write incoming Pitch Bend, map bend factor 
     if (MIDI.getType() == midi::PitchBend && MIDI.getChannel() == MIDI_CHANNEL) {
       uint16_t pitchBend = MIDI.getData1() | (MIDI.getData2() << 7);
       int pitchBendPWM = map(pitchBend, 0, 16383, 0, 16383 << 2);
-      semitones = map(pitchBendPWM, 0, 16383 << 2, -2, 2);
+      benderValue = map(pitchBend, 0, 16383 << 2, PITCH_NEG, PITCH_POS);
       analogWrite(4, pitchBendPWM);
     }
 
-    // -----------------------Check for and write incoming Aftertouch 
+    // ----------------------- Check for and write incoming Aftertouch 
     if (MIDI.getType() == midi::AfterTouchChannel && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t aftertouch = MIDI.getData1();
       int channelPressurePWM = map(aftertouch, 0, 127, 0, 8191 << 2);
@@ -222,16 +221,21 @@ void loop() {
       analogWrite(6, modulationWheelPWM);
     }
 
-    // ----------------------- Write gates and velocity outputs ----------------
+    // ----------------------- Write gates and velocity outputs, bend notes 
     for (int i = 0; i < NUM_VOICES; i++) {
       // Output gate
       digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
-      unsigned int noteBended = noteVolt[voices[0].noteNumber];
-      voices[i].bendVolts = noteBended + (semitones * 68);
+      voices[i].bendedNote = noteVolt[voices[0].noteNumber] + (benderValue * 67.9);
+      if (voices[i].bendedNote < 0) {
+        voices[i].bendedNote = 0;
+      }
+      if (voices[i].bendedNote > 4095) {
+        voices[i].bendedNote = 4095;
+      }
     }
   }
 
-  // --------------------- Write velocity voltages to DAC boards -----------------
+  // --------------------- Write velocity voltages to DAC boards 
   dac3.setChannelValue(MCP4728_CHANNEL_A, veloVolt[voices[0].velocity], MCP4728_VREF_VDD);
   dac3.setChannelValue(MCP4728_CHANNEL_B, veloVolt[voices[1].velocity], MCP4728_VREF_VDD);
   dac3.setChannelValue(MCP4728_CHANNEL_C, veloVolt[voices[2].velocity], MCP4728_VREF_VDD);
@@ -241,13 +245,13 @@ void loop() {
   dac4.setChannelValue(MCP4728_CHANNEL_C, veloVolt[voices[6].velocity], MCP4728_VREF_VDD);
   dac4.setChannelValue(MCP4728_CHANNEL_D, veloVolt[voices[7].velocity], MCP4728_VREF_VDD);
   
-  // -------------------- Write note frequency voltages to DAC boards ---------------------
-  dac1.setChannelValue(MCP4728_CHANNEL_A, voices[0].bendVolts, MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_B, voices[1].bendVolts, MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_C, voices[2].bendVolts, MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_D, voices[3].bendVolts, MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_A, voices[4].bendVolts, MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_B, voices[5].bendVolts, MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_C, voices[6].bendVolts, MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_D, voices[7].bendVolts, MCP4728_VREF_VDD);
+  // -------------------- Write bended note frequency voltages to DAC boards 
+  dac1.setChannelValue(MCP4728_CHANNEL_A, voices[0].bendedNote, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_B, voices[1].bendedNote, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_C, voices[2].bendedNote, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_D, voices[3].bendedNote, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_A, voices[4].bendedNote, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_B, voices[5].bendedNote, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_C, voices[6].bendedNote, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_D, voices[7].bendedNote, MCP4728_VREF_VDD);
 }
