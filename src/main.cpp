@@ -65,6 +65,8 @@ const unsigned int noteVolt[61] = {
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
+uint16_t semitones = 0;
+
 // ------------------------------------- Voice buffer init --------------------------------------------------------------
 
 struct Voice {
@@ -76,6 +78,7 @@ struct Voice {
   uint8_t channelPressure;
   uint8_t modulationWheel;
   uint8_t prevNoteNumber;
+  uint16_t bendVolts;
 };
 
 Voice voices[NUM_VOICES];
@@ -90,6 +93,7 @@ void initializeVoices() {
     voices[i].channelPressure = 0;
     voices[i].modulationWheel = 0;
     voices[i].prevNoteNumber = 0;
+    voices[i].bendVolts = 0x2000;
   }
 }
 
@@ -200,6 +204,7 @@ void loop() {
     if (MIDI.getType() == midi::PitchBend && MIDI.getChannel() == MIDI_CHANNEL) {
       uint16_t pitchBend = MIDI.getData1() | (MIDI.getData2() << 7);
       int pitchBendPWM = map(pitchBend, 0, 16383, 0, 16383 << 2);
+      semitones = map(pitchBendPWM, 0, 16383 << 2, -2, 2);
       analogWrite(4, pitchBendPWM);
     }
 
@@ -221,6 +226,8 @@ void loop() {
     for (int i = 0; i < NUM_VOICES; i++) {
       // Output gate
       digitalWrite(30 - i, voices[i].noteOn ? HIGH : LOW);
+      unsigned int noteBended = noteVolt[voices[0].noteNumber];
+      voices[i].bendVolts = noteBended + (semitones * 68);
     }
   }
 
@@ -235,12 +242,12 @@ void loop() {
   dac4.setChannelValue(MCP4728_CHANNEL_D, veloVolt[voices[7].velocity], MCP4728_VREF_VDD);
   
   // -------------------- Write note frequency voltages to DAC boards ---------------------
-  dac1.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[0].noteNumber], MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[1].noteNumber], MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[2].noteNumber], MCP4728_VREF_VDD);
-  dac1.setChannelValue(MCP4728_CHANNEL_D, noteVolt[voices[3].noteNumber], MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_A, noteVolt[voices[4].noteNumber], MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_B, noteVolt[voices[5].noteNumber], MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_C, noteVolt[voices[6].noteNumber], MCP4728_VREF_VDD);
-  dac2.setChannelValue(MCP4728_CHANNEL_D, noteVolt[voices[7].noteNumber], MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_A, voices[0].bendVolts, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_B, voices[1].bendVolts, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_C, voices[2].bendVolts, MCP4728_VREF_VDD);
+  dac1.setChannelValue(MCP4728_CHANNEL_D, voices[3].bendVolts, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_A, voices[4].bendVolts, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_B, voices[5].bendVolts, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_C, voices[6].bendVolts, MCP4728_VREF_VDD);
+  dac2.setChannelValue(MCP4728_CHANNEL_D, voices[7].bendVolts, MCP4728_VREF_VDD);
 }
