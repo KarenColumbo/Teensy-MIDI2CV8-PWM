@@ -31,8 +31,8 @@ It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send
 
 Pitchbend, modwheel and aftertouch PWM will likely need buffering and effective low-pass filtering.
 
-MIDI pitch bend is just translated into PWM voltage instead of factoring it into the note frequencies. At 12 bit there's likely to be audible "digital steps", so I deemed it easier to just feed a CV In pin on the respective VCO - and maybe VCF cut-off. COuld be I need a fifth MCP4728 for the controller outputs - don't know how crappy the PWM stuff looks on scope.
+MIDI pitch bend is translated into 12-bit DAC voltage and added to/subtracted from the note frequencies. At 12 bit there's likely to be audible "digital steps", so we'll see, I feed it via CV In pin to the respective VCO anyway - and maybe VCF cut-off. Could be I need a fifth MCP4728 for the controller outputs - don't know how crappy the PWM stuff looks on scope.
 
-Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware.
+Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware which WILL sound better anyway.
 
 If you want to buy me a beer to get going (maybe my struggling helps other n00bs in need), you could do so here and earn my undying gratitude: https://www.buymeacoffee.com/synthiy
