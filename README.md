@@ -4,7 +4,11 @@
 
 ## News:
 
-### Feb 7th '23:
+### Feb 7th '23
+
+- Defined MIDI controllers 70-79 to control analog stuff like ADSR, VCF and such from keyboard knobs instead of a gazillion analog pots. As long as there are enough Teensy GPIOs to write those values to ...
+
+### Feb 6th '23:
 
 - Set up first beginnings of a simple Arpeggiator.
 - Simple sustain pedal routine. If velocity == 0, but pedal is on, note still on.
