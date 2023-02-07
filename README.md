@@ -10,7 +10,7 @@
 
 ### Feb 6th '23:
 
-- Set up first beginnings of a simple Arpeggiator.
+- Set up first beginnings of a simple Arpeggiator. Has its own array, note order is note age, so I don't need patterns except maybe up or down.
 - Simple sustain pedal routine. If velocity == 0, but pedal is on, note still on.
 
 ## Features:
