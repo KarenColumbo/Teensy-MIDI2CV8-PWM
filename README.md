@@ -1,6 +1,10 @@
 # Teensy-MIDI2CV8 Version 0.1 - Still UNTESTED! Use at your own risk!
 A naive take on an 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
 
+Feb 7th '23: 
+• Set up first beginnings of a simple Arpeggiator.
+• Sustain pedal routines. If pedal == on, notes can't be off, even if velocity == 0.
+
 I intend to use it to feed analog VCOs, VCAs, ADSRs and VCFs with the produced signals.
 
 The routines and functions present are the result of months of incessantly surfing the World Wide Web with unparalleled mulishness. I just cobbled together what looked reasonable to me wee n00b eye and tried to fit it into a valid frame.
