@@ -6,8 +6,8 @@
 
 ### Feb 7th '23:
 
-• Set up first beginnings of a simple Arpeggiator.
-• Simple sustain pedal routine. If velocity == 0, but pedal is on, note still on.
+- Set up first beginnings of a simple Arpeggiator.
+- Simple sustain pedal routine. If velocity == 0, but pedal is on, note still on.
 
 ## Features:
 
@@ -21,23 +21,18 @@ It should read incoming serial MIDI data (UART) into a voice buffer array with o
 
 After some calculations it should send
 
-• 8 on/off gates (bool), 
-
-• channel pitchbend (14 bit), 
-
-• channel modwheel (14 bit mapped), and 
-
-• channel aftertouch (14 bit mapped) 
+- 8 on/off gates (bool), 
+- channel pitchbend (14 bit), 
+- channel modwheel (14 bit mapped), and 
+- channel aftertouch (14 bit mapped) 
 
 as PWM voltages at 11 GPIO output pins. 
 
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
-• 8 12-bit note CV voltages from 0V (MIDI note C2) to 5.0V (MIDI note C7), and 
-
-• 8 12-bit note-on velocities between 0.0 and 5.0-ish volts. I probably do some velocity curving later on.
-
+- 8 12-bit note CV voltages from 0V (MIDI note C2) to 5.0V (MIDI note C7), and 
+- 8 12-bit note-on velocities between 0.0 and 5.0-ish volts. I probably do some velocity curving later on.
 
 Pitchbend, modwheel and aftertouch PWM will likely need buffering and effective low-pass filtering.
 
