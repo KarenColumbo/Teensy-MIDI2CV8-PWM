@@ -4,9 +4,14 @@
 
 ## News:
 
+### Feb 8th '23
+
+- Reconfigured GPIO stuff to hardware PWM and switched GPIOs with DACs - 14 bits are better than 12 when it comes to notes and pitch bend. 
+- Heavy debugging going on in my chaotic n00b code. Always some crap to weed out.
+
 ### Feb 7th '23
 
-- Defined MIDI controllers 70-79 to control analog stuff like ADSR, VCF and such from keyboard knobs instead of a gazillion analog pots. As long as there are enough Teensy GPIOs to write those values to ...
+- Defined MIDI controllers 70-79 to control analog stuff like ADSR, VCF and such from keyboard knobs instead of a gazillion analog pots. Putting them out at MCP4728 DACs to spare some level shifters.
 
 ### Feb 6th '23:
 
@@ -25,23 +30,26 @@ It should read incoming serial MIDI data (UART) into a voice buffer array with o
 
 After some calculations it should send
 
-- 8 on/off gates (bool), 
-- channel pitchbend (14 bit), 
-- channel modwheel (14 bit mapped), and 
-- channel aftertouch (14 bit mapped) 
-- MIDI controllers 70–79 (7 bit -> 14 bit mapped)
+- 8 on/off gates (bool)
+- 8 note frequencies with software pitchbend (14 bit)
+- 8 note velocities 
+- channel pitchbend (14 bit) 
 
-as PWM voltages at 21 GPIO output pins. (Could be I'm gonna need to MUX/DEMUX at some point).
+as PWM voltages at 25 GPIO output pins.
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
-- 8 12-bit note CV voltages from 0V (MIDI note C2) to 5.0V (MIDI note C7), and 
-- 8 12-bit note-on velocities between 0.0 and 5.0-ish volts. I probably do some velocity curving later on.
+- channel modwheel 
+- channel aftertouch
+- MIDI controllers 70–79 
 
-Pitchbend, modwheel and aftertouch PWM will likely need buffering and effective low-pass filtering.
+Since hardware PWM purportedly does higher precision I could probably get away with first order low-pass filtering. Gotta test this. If it doesn't work out I'll go the "bit spray" way. 
 
-MIDI pitch bend is translated into 12-bit DAC voltage and added to/subtracted from the note frequencies. At 12 bit there's likely to be audible "digital steps", so we'll see, I feed it via CV In pin to the respective VCO anyway - and maybe VCF cut-off. Could be I need a fifth MCP4728 for the controller outputs - don't know how crappy the PWM stuff looks on scope.
+MIDI pitch bend is sent out as a CV additionally to do stuff with it - VCF reso comes to mind.
 
-Thought about implementing portamento (like PolyKit did with his DCO-8), but ... 12 bit. Can always do that in discrete hardware which WILL sound better anyway.
+Thought about implementing portamento (like PolyKit did with his DCO-8), but is a bit heavy b
+rain stuff - not my forté, worst case I just steal it from PolyKit :) Nah, kidding. I think it sounds better in hardware anyway.
+
+There are the roots of a Arpeggiator idea in the code. But it's time to get the whole monster alive, first.
 
 If you want to buy me a beer to get going (maybe my struggling helps other n00bs in need), you could do so here and earn my undying gratitude: https://www.buymeacoffee.com/synthiy
