@@ -6,7 +6,7 @@
 
 ### Feb 8th '23
 
-- Reconfigured GPIO stuff to hardware PWM and switched GPIOs with DACs - 14 bits are better than 12 when it comes to notes and pitch bend. I want advaned chord voicing withoot bleeding from me wee ears. And heavy pitch bending without stepping.
+- Reconfigured GPIO stuff and switched GPIOs with DACs - let's see if I can get this right with analogWriteFrequency and the right bit number. May have to switch again if this fails.
 - Heavy debugging going on in my chaotic n00b code. Always some crap to weed out.
 
 ### Feb 7th '23
@@ -30,10 +30,10 @@ It should read incoming serial MIDI data (UART) into a voice buffer array with o
 
 After some calculations it should send
 
-- 8 on/off gates (bool)
-- 8 note frequencies with software pitchbend (14 bit)
+- 8 on/off gates
+- 8 note frequencies with software pitchbend 
 - 8 note velocities 
-- channel pitchbend (14 bit) 
+- channel pitchbend
 
 as PWM voltages at 25 GPIO output pins.
 
@@ -43,7 +43,7 @@ It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send
 - channel aftertouch
 - MIDI controllers 70–79 
 
-Since hardware PWM purportedly does higher precision I could probably get away with first order low-pass filtering. Gotta test this. If it doesn't work out I'll go the "bit spray" way. 
+Since setting PWM frequencies manually purportedly does higher precision I could probably get away with first order low-pass filtering. Gotta test this. If it doesn't work out I'll go the "bit spray" way. 
 
 MIDI pitch bend is sent out as a CV additionally to do stuff with it - VCF reso comes to mind.
 
