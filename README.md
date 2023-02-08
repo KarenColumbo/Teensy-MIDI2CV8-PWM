@@ -6,7 +6,7 @@
 
 ### Feb 8th '23
 
-- Reconfigured GPIO stuff to hardware PWM and switched GPIOs with DACs - 14 bits are better than 12 when it comes to notes and pitch bend. 
+- Reconfigured GPIO stuff to hardware PWM and switched GPIOs with DACs - 14 bits are better than 12 when it comes to notes and pitch bend. I want advaned chord voicing withoot bleeding from me wee ears. And heavy pitch bending without stepping.
 - Heavy debugging going on in my chaotic n00b code. Always some crap to weed out.
 
 ### Feb 7th '23
