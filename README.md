@@ -29,9 +29,9 @@ After some calculations it should send
 - channel pitchbend (14 bit), 
 - channel modwheel (14 bit mapped), and 
 - channel aftertouch (14 bit mapped) 
+- MIDI controllers 70–79 (7 bit -> 14 bit mapped)
 
-as PWM voltages at 11 GPIO output pins. 
-
+as PWM voltages at 21 GPIO output pins. (Could be I'm gonna need to MUX/DEMUX at some point).
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
