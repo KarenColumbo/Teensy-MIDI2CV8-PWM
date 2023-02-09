@@ -6,6 +6,8 @@
 #include <MIDI.h>
 #include <Adafruit_MCP4728.h>
 #include <SoftwareSerial.h>
+#include <Wire.h>
+#include <Adafruit_MCP23X17.h>
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
@@ -13,6 +15,19 @@
 #define PITCH_NEG -2
 #define CC_TEMPO 5
 #define A4 440
+#define DAC_ADDRESS1 0x60
+#define DAC_ADDRESS2 0x61
+#define DAC_ADDRESS3 0x62
+#define MCP_ADDRESS 0x20
+
+#define GATE_01 0
+#define GATE_02 1
+#define GATE_03 2
+#define GATE_04 3
+#define GATE_05 4
+#define GATE_06 5
+#define GATE_07 6
+#define GATE_08 7
 
 uint8_t midiTempo;
 uint8_t midiController[10];
@@ -28,8 +43,6 @@ uint16_t sixteenthNoteDuration = 0;
 const float veloVoltLin[128]={
   0, 128, 256, 384, 512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, 2048, 2176, 2304, 2432, 2560, 2688, 2816, 2944, 3072, 3200, 3328, 3456, 3584, 3712, 3840, 3968, 4096, 4224, 4352, 4480, 4608, 4736, 4864, 4992, 5120, 5248, 5376, 5504, 5632, 5760, 5888, 6016, 6144, 6272, 6400, 6528, 6656, 6784, 6912, 7040, 7168, 7296, 7424, 7552, 7680, 7808, 7936, 8064, 8192, 8320, 8448, 8576, 8704, 8832, 8960, 9088, 9216, 9344, 9472, 9600, 9728, 9856, 9984, 10112, 10240, 10368, 10496, 10624, 10752, 10880, 11008, 11136, 11264, 11392, 11520, 11648, 11776, 11904, 12032, 12160, 12288, 12416, 12544, 12672, 12800, 12928, 13056, 13184, 13312, 13440, 13568, 13696, 13824, 13952, 14080, 14208, 14336, 14464, 14592, 14720, 14848, 14976, 15104, 15232, 15360, 15488, 15616, 15744, 15872, 16000, 16128, 16256
 };
-
-// --------------------------------- 12 bit Velocity Voltages - log 
 
 // ----------------------------- MIDI note frequencies C1-C7
 float midiNoteFrequency [73] = {
@@ -50,8 +63,6 @@ const unsigned int noteVolt[73] = {
   3901, 4148, 4411, 4688, 4982, 5294, 5625, 5974, 6345, 6738, 7154, 7595, 
   8062, 8557, 9081, 9637, 10225, 10849, 11509, 12209, 12950, 13736, 14568, 15450, 16383
   };
-
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 // ------------------------------------- Voice buffer init 
 struct Voice {
@@ -150,7 +161,9 @@ void fillArpNotes() {
 Adafruit_MCP4728 dac1;
 Adafruit_MCP4728 dac2;
 Adafruit_MCP4728 dac3;
-Adafruit_MCP4728 dac4;
+Adafruit_MCP23X17 mcp;
+
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 // ******************************************************************************************************
 // ************************************************************************ MAIN SETUP 
@@ -159,19 +172,21 @@ void setup() {
     arpNotes[i] = -1;
   }
 
-  // ****************** WARNING: Connect VDD to 5 volts!!! 
+  // ****************** WARNING: Connect DACs VDD to 5 volts!!! 
+  
   // ****************** DAC Wiring:
   // Teensy 4.1 --> DAC1, DAC2
   // Pin 16 (SCL) --> SCL
   // Pin 17 (SDA) --> SDA
-  // Teensy 4.1 --> DAC3, DAC4
-  // Pin 20 (SCL1) --> SCL
-  // Pin 21 (SDA1) --> SDA
+  
+  // ****************** MCP Wiring:
+    // Pin 24 (SCL2) --> MCP SCL
+  // Pin 25 (SDA2) --> MCP SDA
   // Initialize I2C communication
-  dac1.begin(0x60);
-  dac2.begin(0x61);
-  dac3.begin(0x62);
-  dac4.begin(0x63);
+  dac1.begin(DAC_ADDRESS1);
+  dac2.begin(DAC_ADDRESS2);
+  dac3.begin(DAC_ADDRESS3);
+  mcp.begin_I2C(MCP_ADDRESS);
   Wire.begin(400000);
   
   // Set 14 bits Hardware PWM for pitchbender and 8 note voltage outputs
@@ -202,17 +217,17 @@ void setup() {
   pinMode(18, OUTPUT); // Velocity 07
   pinMode(19, OUTPUT); // Velocity 08
 
-  pinMode(0, OUTPUT); // Gate 01
-  pinMode(1, OUTPUT); // Gate 02
-  pinMode(24, OUTPUT); // Gate 03
-  pinMode(25, OUTPUT); // Gate 04
-  pinMode(28, OUTPUT); // Gate 05
-  pinMode(29, OUTPUT); // Gate 06
-  pinMode(36, OUTPUT); // Gate 07
-  pinMode(37, OUTPUT); // Gate 08
-
   pinMode(33, OUTPUT); // Pitchbender
   analogWriteFrequency(33, 9155.27);
+
+  mcp.pinMode(0, OUTPUT);
+  mcp.pinMode(1, OUTPUT);
+  mcp.pinMode(2, OUTPUT);
+  mcp.pinMode(3, OUTPUT);
+  mcp.pinMode(4, OUTPUT);
+  mcp.pinMode(5, OUTPUT);
+  mcp.pinMode(6, OUTPUT);
+  mcp.pinMode(7, OUTPUT);
 }
 
 // *****************************************************************************************************
@@ -343,15 +358,15 @@ void loop() {
   analogWrite(23, voices[7].bentNote);
 
   // ---------------------- Write Gates
-  digitalWrite(0, voices[0].noteOn ? HIGH : LOW); // Gate 01
-  digitalWrite(1, voices[1].noteOn ? HIGH : LOW); // Gate 02
-  digitalWrite(24, voices[2].noteOn ? HIGH : LOW); // Gate 03
-  digitalWrite(25, voices[3].noteOn ? HIGH : LOW); // Gate 04
-  digitalWrite(28, voices[4].noteOn ? HIGH : LOW); // Gate 05
-  digitalWrite(29, voices[5].noteOn ? HIGH : LOW); // Gate 06
-  digitalWrite(36, voices[6].noteOn ? HIGH : LOW); // Gate 07
-  digitalWrite(37, voices[7].noteOn ? HIGH : LOW); // Gate 08
-
+  mcp.digitalWrite(0, voices[0].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(1, voices[1].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(2, voices[2].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(3, voices[3].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(4, voices[4].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(5, voices[5].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(6, voices[6].noteOn ? HIGH : LOW); // Gate 01
+  mcp.digitalWrite(7, voices[7].noteOn ? HIGH : LOW); // Gate 01
+  
   //-------------------------- Fill Arpeggio buffer
   fillArpNotes();
 
