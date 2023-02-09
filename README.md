@@ -40,7 +40,7 @@ After some calculations it should send
 
 as PWM voltages at 25 GPIO output pins and
 
-- 8 on/off gates to MCP23017,
+- 8 on/off gates to MCP23017
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
