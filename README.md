@@ -4,6 +4,10 @@
 
 ## News:
 
+### Feb 9th '23
+
+- Since I had used up ALL of the GPIO pins, I decided to put one of my MCP23017s to use. I chained them to the 3 DACs, so I have 8 GPIO pins free for eventual switcheroo or controleroo.
+
 ### Feb 8th '23
 
 - Reconfigured GPIO stuff and switched GPIOs with DACs - let's see if I can get this right with analogWriteFrequency and the right bit number. May have to switch again if this fails.
@@ -30,12 +34,13 @@ It should read incoming serial MIDI data (UART) into a voice buffer array with o
 
 After some calculations it should send
 
-- 8 on/off gates
-- 8 note frequencies with software pitchbend 
+- 8 note frequencies with software pitchbend (purportedly 14 bits by setting analogWriteFrequency and analogWriteResolution according to https://www.pjrc.com/teensy/td_pulse.html)
 - 8 note velocities 
 - channel pitchbend
 
-as PWM voltages at 25 GPIO output pins.
+as PWM voltages at 25 GPIO output pins and
+
+- 8 on/off gates to MCP23017,
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
