@@ -44,9 +44,9 @@ as PWM voltages at 25 GPIO output pins and
 
 It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
-- channel modwheel 
-- channel aftertouch
-- MIDI controllers 70–79 
+- channel modwheel (14 bits -> 12 bits)
+- channel aftertouch (8 bits -> 12 bits)
+- MIDI controllers 70–79 (8 bits -> 12 bits)
 
 Since setting PWM frequencies manually purportedly does higher precision I could probably get away with first order low-pass filtering. Gotta test this. If it doesn't work out I'll go the "bit spray" way. 
 
