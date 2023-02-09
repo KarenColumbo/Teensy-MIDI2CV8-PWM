@@ -15,12 +15,13 @@
 uint8_t midiTempo;
 uint8_t midiController[10];
 uint16_t benderValue = 0;
+uint16_t eighthNoteDuration = 0;
+uint16_t sixteenthNoteDuration = 0; 
 bool susOn = false;
 int arpIndex = 0;
 int numArpNotes = 0;
 int arpNotes[NUM_VOICES];
-uint16_t eighthNoteDuration = 0;
-uint16_t sixteenthNoteDuration = 0; 
+int octSwitch = 0;
 
 // --------------------------------- Velocity Voltages 
 const float veloVoltLin[128]={
