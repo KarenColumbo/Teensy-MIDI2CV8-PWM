@@ -52,8 +52,7 @@ Since setting PWM frequencies manually purportedly does higher precision I could
 
 MIDI pitch bend is sent out as a CV additionally to do stuff with it - VCF reso comes to mind.
 
-Thought about implementing portamento (like PolyKit did with his DCO-8), but is a bit heavy b
-rain stuff - not my forté, worst case I just steal it from PolyKit :) Nah, kidding. I think it sounds better in hardware anyway.
+Thought about implementing portamento (like PolyKit did with his DCO-8), but thinking about it hurts my brain - not my forté, worst case I just steal it from PolyKit :) Nah, kidding. I think it sounds better in hardware anyway.
 
 There are the roots of a Arpeggiator idea in the code. But it's time to get the whole monster alive, first.
 
