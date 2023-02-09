@@ -36,13 +36,13 @@ After some calculations it should send
 
 - 8 note frequencies with software pitchbend (purportedly 14 bits by setting analogWriteFrequency and analogWriteResolution according to https://www.pjrc.com/teensy/td_pulse.html)
 - 8 note velocities 
-- channel pitchbend
+- pitchbender CV
 
-as PWM voltages at 25 GPIO output pins and
+as PWM voltages at 17 GPIO output pins and
 
-- 8 on/off gates to MCP23017
+- 8 on/off gates to MCP23017 (daisy-chained to DACs)
 
-It also uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
+It uses three Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
 - channel modwheel (14 bits -> 12 bits)
 - channel aftertouch (8 bits -> 12 bits)
