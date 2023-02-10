@@ -6,7 +6,7 @@
 
 ### Feb 10th '23
 
-- Spliced in an Adafruit TCA9548A I2C multiplexer to take care of the MCP4728s and the MCP23017 without having to individually flash addresses to the 4728.
+- Spliced in an Adafruit TCA9548A I2C multiplexer to take care of the MCP4728s and the MCP23017 without having to individually flash addresses to the 4728s.
 
 ### Feb 9th '23
 
