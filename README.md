@@ -2,7 +2,7 @@
 ## A naive take on an 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
 ### Still UNTESTED! Do NOT use, this is just a "travelogue"!
 
-## News:
+## History:
 
 ### Feb 10th '23
 
