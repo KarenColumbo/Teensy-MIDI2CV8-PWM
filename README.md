@@ -4,6 +4,10 @@
 
 ## News:
 
+### Feb 10th '23
+
+- Spliced in an Adafruit TCA9548A I2C multiplexer to take care of the MCP4728s and the MCP23017 without having to individually flash addresses to the 4728.
+
 ### Feb 9th '23
 
 - Since I had used up ALL of the GPIO pins, I decided to put one of my MCP23017s to use. I chained them to the 3 DACs, so I have 8 GPIO pins free for eventual switcheroo or controleroo.
@@ -40,13 +44,15 @@ After some calculations it should send
 
 as PWM voltages at 17 GPIO output pins and
 
-- 8 on/off gates to MCP23017 (daisy-chained to DACs)
+- 8 on/off gates to MCP23017 
 
-It uses three Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
+It uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send 
 
 - channel modwheel (14 bits -> 12 bits)
 - channel aftertouch (8 bits -> 12 bits)
 - MIDI controllers 70–79 (8 bits -> 12 bits)
+
+MCP boards are addressed by an Adafruit TCA9548A I2C multiplexer board.
 
 Since setting PWM frequencies manually purportedly does higher precision I could probably get away with first order low-pass filtering. Gotta test this. If it doesn't work out I'll go the "bit spray" way. 
 
