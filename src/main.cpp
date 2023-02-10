@@ -8,6 +8,7 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Adafruit_MCP23X17.h>
+#include "TCA9548.h"
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
@@ -15,18 +16,6 @@
 #define PITCH_NEG -2
 #define CC_TEMPO 5
 #define A4 440
-#define DAC_ADDRESS1 0x60
-#define DAC_ADDRESS2 0x61
-#define DAC_ADDRESS3 0x62
-#define MCP_ADDRESS 0x20
-#define GATE_01 0
-#define GATE_02 1
-#define GATE_03 2
-#define GATE_04 3
-#define GATE_05 4
-#define GATE_06 5
-#define GATE_07 6
-#define GATE_08 7
 
 uint8_t midiTempo;
 uint8_t midiController[10];
@@ -173,37 +162,44 @@ void fillArpNotes() {
   }
 }
 
-// ------------------------------------ Initialize DACs
-Adafruit_MCP4728 dac1;
-Adafruit_MCP4728 dac2;
-Adafruit_MCP4728 dac3;
+// ------------------------------------ Initialize multiplexer, 4728s and 23017
+TCA9548 tca = TCA9548(0x70);
+Adafruit_MCP4728 dac_0, dac_1, dac_2, dac_3;
 Adafruit_MCP23X17 mcp;
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
+void tcaselect(uint8_t i) {
+  if (i > 7) return;
+ 
+  Wire.beginTransmission(0x70);
+  Wire.write(1 << i);
+  Wire.endTransmission();  
+}
+
 // ******************************************************************************************************
-// ************************************************************************ MAIN SETUP 
+// ******************************************************************************************* MAIN SETUP 
 void setup() {
   for (int i = 0; i < NUM_VOICES; i++) {
     arpNotes[i] = -1;
   }
 
   // ****************** WARNING: Connect DACs VDD to 5 volts!!! 
+
+  // Pin 16 (SCL) --> SCL multiplexer
+  // Pin 17 (SDA) --> SDA multiplexer
   
-  // ****************** DAC Wiring:
-  // Teensy 4.1 --> DAC1, DAC2
-  // Pin 16 (SCL) --> SCL
-  // Pin 17 (SDA) --> SDA
-  
-  // ****************** MCP Wiring:
-    // Pin 24 (SCL2) --> MCP SCL
-  // Pin 25 (SDA2) --> MCP SDA
-  // Initialize I2C communication
-  dac1.begin(DAC_ADDRESS1);
-  dac2.begin(DAC_ADDRESS2);
-  dac3.begin(DAC_ADDRESS3);
-  mcp.begin_I2C(MCP_ADDRESS);
-  Wire.begin(400000);
+  Wire.begin(200000);
+  tcaselect(0);
+  dac_0.begin(0x60);
+  tcaselect(1);
+  dac_1.begin(0x60);
+  tcaselect(2);
+  dac_2.begin(0x60);
+  tcaselect(3);
+  dac_3.begin(0x60);
+  tcaselect(4);
+  mcp.begin_I2C(0x20);
   
   // Set 14 bits Hardware PWM for pitchbender and 8 note voltage outputs
   analogWriteResolution(14);
@@ -231,7 +227,6 @@ void setup() {
   pinMode(23, OUTPUT); // Note 08
   analogWriteFrequency(23, 9155.27);
   digitalWrite(23, LOW);
-  
   pinMode(10, OUTPUT); // Velocity 01
   digitalWrite(10, LOW);
   pinMode(11, OUTPUT); // Velocity 02
@@ -248,27 +243,15 @@ void setup() {
   digitalWrite(18, LOW);
   pinMode(19, OUTPUT); // Velocity 08
   digitalWrite(19, LOW);
-  
   pinMode(33, OUTPUT); // Pitchbender
   analogWriteFrequency(33, 9155.27);
   digitalWrite(33, LOW);
-
-  mcp.pinMode(0, OUTPUT);
-  mcp.digitalWrite(0, LOW);
-  mcp.pinMode(1, OUTPUT);
-  mcp.digitalWrite(1, LOW);
-  mcp.pinMode(2, OUTPUT);
-  mcp.digitalWrite(2, LOW);
-  mcp.pinMode(3, OUTPUT);
-  mcp.digitalWrite(3, LOW);
-  mcp.pinMode(4, OUTPUT);
-  mcp.digitalWrite(4, LOW);
-  mcp.pinMode(5, OUTPUT);
-  mcp.digitalWrite(5, LOW);
-  mcp.pinMode(6, OUTPUT);
-  mcp.digitalWrite(6, LOW);
-  mcp.pinMode(7, OUTPUT);
-  mcp.digitalWrite(7, LOW);
+  
+	tcaselect(4);
+	for (int i = 0; i < 8; i++) {
+  	mcp.pinMode(i, OUTPUT);
+  	mcp.digitalWrite(i, LOW);	
+	}
 }
 
 // *****************************************************************************************************
@@ -299,13 +282,15 @@ void loop() {
     // ----------------------- Check for and write incoming Aftertouch 
     if (MIDI.getType() == midi::AfterTouchChannel && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t aftertouch = MIDI.getData1();
-      dac1.setChannelValue(MCP4728_CHANNEL_A, map(aftertouch, 0, 127, 0, 4095));
+      tcaselect(0);
+			dac_0.setChannelValue(MCP4728_CHANNEL_A, map(aftertouch, 0, 127, 0, 4095));
     }
 
     // ------------------------- Check for and write incoming Modulation Wheel 
     if (MIDI.getType() == midi::ControlChange && MIDI.getData1() == 1 && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t modulationWheel = MIDI.getData1() | (MIDI.getData2() << 7);
-      dac1.setChannelValue(MCP4728_CHANNEL_B, map(modulationWheel, 0, 16383, 0, 4095));
+			tcaselect(0);
+      dac_0.setChannelValue(MCP4728_CHANNEL_B, map(modulationWheel, 0, 16383, 0, 4095));
     }
 
     // ------------------------- Check for and write incoming MIDI tempo 
@@ -325,34 +310,44 @@ void loop() {
       uint8_t ccValue = MIDI.getData2();
       switch (ccNumber) {
         case 70:
-        dac1.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+				tcaselect(0);
+        dac_0.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
         break;
         case 71:
-        dac1.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(0);
+      	dac_0.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
         break;
         case 72:
-        dac2.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(1);
+      	dac_1.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
         break;
         case 73:
-        dac2.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(1);
+      	dac_1.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
         break;
         case 74:
-        dac2.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(1);
+      	dac_1.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
         break;
         case 75:
-        dac2.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(1);
+      	dac_1.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
         break;
         case 76:
-        dac3.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(2);
+      	dac_2.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
         break;
         case 77:
-        dac3.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(2);
+      	dac_2.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
         break;
         case 78:
-        dac3.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(2);
+      	dac_2.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
         break;
         case 79:
-        dac3.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        tcaselect(2);
+      	dac_2.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
         break;
       }
     }
@@ -396,7 +391,8 @@ void loop() {
   analogWrite(23, voices[7].bentNote);
 
   // ---------------------- Write Gates
-  mcp.digitalWrite(0, voices[0].noteOn ? HIGH : LOW); // Gate 01
+  tcaselect(4);
+	mcp.digitalWrite(0, voices[0].noteOn ? HIGH : LOW); // Gate 01
   mcp.digitalWrite(1, voices[1].noteOn ? HIGH : LOW); // Gate 01
   mcp.digitalWrite(2, voices[2].noteOn ? HIGH : LOW); // Gate 01
   mcp.digitalWrite(3, voices[3].noteOn ? HIGH : LOW); // Gate 01
