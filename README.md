@@ -5,7 +5,9 @@
 ## History:
 
 ### Feb 11th '23
-- Built in a subroutine that saves/loads CC values 70-79 to/from EEPROM. Included "Bounce2.h", reads momentary load and save switch, threshold: 3 sec.
+
+- Commented out "Arpeggiator" - not sure if I'm on the right track with my idea - gotta jot it down first.
+- Built in a subroutine that saves/loads CC values 70-83 (chained in another MCP4728) to/from EEPROM. Included "Bounce2.h", reads momentary load and save switch, threshold: 3 sec.
 - Some code "prettifying", yet there's still a long and winding road ahead of me …
 
 ### Feb 10th '23
@@ -14,7 +16,7 @@
 
 ### Feb 9th '23
 
-- Since I had used up ALL of the GPIO pins, I decided to put one of my MCP23017s to use. I chained them to the 3 DACs, so I have 8 GPIO pins free for eventual switcheroo or controleroo.
+- Since I had used up ALL of the GPIO pins, I decided to put one of my MCP23017s to use. I chained them to the 4 DACs, so I have 8 GPIO pins free for eventual switcheroo or controleroo.
 
 ### Feb 8th '23
 
@@ -54,7 +56,7 @@ It uses four Adafruit MCP 4728 boards with 5.0 volts Vdd reference to send
 
 - channel modwheel (14 bits -> 12 bits)
 - channel aftertouch (8 bits -> 12 bits)
-- MIDI controllers 70–79 (8 bits -> 12 bits)
+- MIDI controllers 70–83 (8 bits -> 12 bits)
 
 MCP boards are addressed by an Adafruit TCA9548A I2C multiplexer board.
 
