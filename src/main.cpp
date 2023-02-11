@@ -9,6 +9,8 @@
 #include <Wire.h>
 #include <Adafruit_MCP23X17.h>
 #include "TCA9548.h"
+#include <EEPROM.h>
+#include "Bounce2.h"
 
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
@@ -16,6 +18,18 @@
 #define PITCH_NEG -2
 #define CC_TEMPO 5
 #define A4 440
+
+const int SAVE_SWITCH_PIN = 2;
+const int LOAD_SWITCH_PIN = 3;
+const int EEPROM_ADDRESS = 0;
+const int DEBOUNCE_DELAY = 20;
+const int THRESHOLD = 3000;
+
+Bounce saveSwitch = Bounce();
+Bounce loadSwitch = Bounce();
+unsigned long startTime = 0;
+bool saveInProgress = false;
+bool loadInProgress = false;
 
 uint8_t midiTempo;
 uint8_t midiController[10];
@@ -28,6 +42,7 @@ uint16_t eighthNoteDuration = 0;
 uint16_t sixteenthNoteDuration = 0;
 const int notePin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
 const int veloPin[8] = {10, 11, 12, 13, 14, 15, 18, 19};
+int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // --------------------------------- 12 bit Velocity Voltages - linear 
 const float veloVoltLin[128]={
@@ -189,6 +204,13 @@ void setup() {
     arpNotes[i] = -1;
   }
 
+  pinMode(SAVE_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(LOAD_SWITCH_PIN, INPUT_PULLUP);
+  saveSwitch.attach(SAVE_SWITCH_PIN);
+  loadSwitch.attach(LOAD_SWITCH_PIN);
+  saveSwitch.interval(DEBOUNCE_DELAY);
+  loadSwitch.interval(DEBOUNCE_DELAY);
+
   // ****************** WARNING: Connect DACs VDD to 5 volts!!! 
 
   // Pin 16 (SCL) --> SCL multiplexer
@@ -206,7 +228,7 @@ void setup() {
   tcaselect(4);
   mcp.begin_I2C(0x20);
   
-  // Set 14 bits Hardware PWM for velos and note voltage outputs
+  // Set 14 bits Hardware PWM for pitchbender and 8 note voltage outputs
   analogWriteResolution(14);
   for (int i = 0; i < NUM_VOICES; i++) {
     pinMode(notePin[i], OUTPUT); // Note 01
@@ -285,44 +307,117 @@ void loop() {
         case 70:
 				tcaselect(0);
         dac_0.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+        CCValue[0] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 71:
         tcaselect(0);
       	dac_0.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        CCValue[1] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 72:
         tcaselect(1);
       	dac_1.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+        CCValue[2] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 73:
         tcaselect(1);
       	dac_1.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+        CCValue[3] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 74:
         tcaselect(1);
       	dac_1.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+        CCValue[4] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 75:
         tcaselect(1);
       	dac_1.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        CCValue[5] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 76:
         tcaselect(2);
       	dac_2.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+        CCValue[6] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 77:
         tcaselect(2);
       	dac_2.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+        CCValue[7] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 78:
         tcaselect(2);
       	dac_2.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+        CCValue[8] = map(ccValue, 0, 127, 0, 4095);
         break;
         case 79:
         tcaselect(2);
       	dac_2.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+        CCValue[9] = map(ccValue, 0, 127, 0, 4095);
         break;
       }
+    }
+
+    // Check if the save switch is pressed
+    saveSwitch.update();
+    if (saveSwitch.fallingEdge() && !loadInProgress) {
+      startTime = millis();
+      saveInProgress = true;
+    }
+
+    // Check if the load switch is pressed
+    loadSwitch.update();
+    if (loadSwitch.fallingEdge() && !saveInProgress) {
+      startTime = millis();
+      loadInProgress = true;
+    }
+
+    // Save values to NVM if the save switch has been pressed for more than THRESHOLD milliseconds
+    if (saveInProgress && (millis() - startTime >= THRESHOLD)) {
+      // Save values
+      tcaselect(0);
+      EEPROM.write(EEPROM_ADDRESS, CCValue[0]);
+      EEPROM.write(EEPROM_ADDRESS + 1, CCValue[1]);
+      tcaselect(1);
+      EEPROM.write(EEPROM_ADDRESS + 2, CCValue[2]);
+      EEPROM.write(EEPROM_ADDRESS + 3, CCValue[3]);
+      EEPROM.write(EEPROM_ADDRESS + 4, CCValue[4]);
+      EEPROM.write(EEPROM_ADDRESS + 5, CCValue[5]);
+      tcaselect(2);
+      EEPROM.write(EEPROM_ADDRESS + 6, CCValue[6]);
+      EEPROM.write(EEPROM_ADDRESS + 7, CCValue[7]);
+      EEPROM.write(EEPROM_ADDRESS + 8, CCValue[8]);
+      EEPROM.write(EEPROM_ADDRESS + 9, CCValue[9]);
+      saveInProgress = false;
+    }
+
+    // Load values from NVM if the load switch has been pressed for more than THRESHOLD milliseconds
+    if (loadInProgress && (millis() - startTime >= THRESHOLD)) {
+      // Load values
+      uint16_t value;
+      tcaselect(0);
+      value = EEPROM.read(EEPROM_ADDRESS);
+      dac_0.setChannelValue(MCP4728_CHANNEL_C, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 1);
+      dac_0.setChannelValue(MCP4728_CHANNEL_D, value);
+      tcaselect(1);
+      value = EEPROM.read(EEPROM_ADDRESS + 2);
+      dac_1.setChannelValue(MCP4728_CHANNEL_A, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 3);
+      dac_1.setChannelValue(MCP4728_CHANNEL_B, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 4);
+      dac_1.setChannelValue(MCP4728_CHANNEL_C, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 5);
+      dac_1.setChannelValue(MCP4728_CHANNEL_D, value);
+      tcaselect(2);
+      value = EEPROM.read(EEPROM_ADDRESS + 6);
+      dac_2.setChannelValue(MCP4728_CHANNEL_A, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 7);
+      dac_2.setChannelValue(MCP4728_CHANNEL_B, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 8);
+      dac_2.setChannelValue(MCP4728_CHANNEL_C, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 9);
+      dac_2.setChannelValue(MCP4728_CHANNEL_D, value);
+      loadInProgress = false;
     }
 
     // ---------------------------- Read and store sustain pedal status
