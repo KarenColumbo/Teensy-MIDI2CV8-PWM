@@ -68,4 +68,4 @@ Thought about implementing portamento (like PolyKit did with his DCO-8), but thi
 
 There are the roots of a Arpeggiator idea in the code. But it's time to get the whole monster alive, first.
 
-If you want to buy me a beer to get going (maybe my struggling helps other n00bs in need), you could do so here and earn my undying gratitude: https://www.buymeacoffee.com/synthiy
+###### If you want to buy me a beer to get going (maybe my struggling helps other n00bs in need), you could do so here and earn my undying gratitude: https://www.buymeacoffee.com/synthiy
