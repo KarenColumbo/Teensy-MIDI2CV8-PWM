@@ -38,7 +38,7 @@ Bounce loadSwitch = Bounce();
 unsigned long startTime = 0;
 bool saveInProgress = false;
 bool loadInProgress = false;
-int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // GPIO Pins
 const int notePin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
@@ -167,28 +167,28 @@ void noteOff(uint8_t midiNote) {
 }
 
 //-------------------------------- Fill Arpeggio buffer from oldest to youngest note
-void fillArpNotes() {
-  arpIndex = 0;
-  for (int i = 0; i < NUM_VOICES; i++) {
-    if (voices[i].noteOn) {
-      arpNotes[arpIndex++] = voices[i].midiNote;
-    }
-  }
-  numArpNotes = arpIndex;
-  for (int i = 0; i < NUM_VOICES; i++) {
-    for (int j = 0; j < arpIndex - 1; j++) {
-      if (voices[i].noteAge < voices[j].noteAge) {
-        int temp = arpNotes[j];
-        arpNotes[j] = arpNotes[j + 1];
-        arpNotes[j + 1] = temp;
-      }
-    }
-  }
-}
+//void fillArpNotes() {
+//  arpIndex = 0;
+//  for (int i = 0; i < NUM_VOICES; i++) {
+//    if (voices[i].noteOn) {
+//      arpNotes[arpIndex++] = voices[i].midiNote;
+//    }
+//  }
+//  numArpNotes = arpIndex;
+//  for (int i = 0; i < NUM_VOICES; i++) {
+//    for (int j = 0; j < arpIndex - 1; j++) {
+//      if (voices[i].noteAge < voices[j].noteAge) {
+//        int temp = arpNotes[j];
+//        arpNotes[j] = arpNotes[j + 1];
+//        arpNotes[j + 1] = temp;
+//      }
+//    }
+//  }
+//}
 
 // ------------------------------------ Initialize multiplexer, 4728s and 23017
 TCA9548 tca = TCA9548(0x70);
-Adafruit_MCP4728 dac_0, dac_1, dac_2, dac_3;
+Adafruit_MCP4728 dac_0, dac_1, dac_2, dac_3, dac_4;
 Adafruit_MCP23X17 mcp;
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
@@ -204,9 +204,9 @@ void tcaselect(uint8_t i) {
 // ******************************************************************************************************
 // ******************************************************************************************* MAIN SETUP 
 void setup() {
-  for (int i = 0; i < NUM_VOICES; i++) {
-    arpNotes[i] = -1;
-  }
+//  for (int i = 0; i < NUM_VOICES; i++) {
+//    arpNotes[i] = -1;
+//  }
 
   pinMode(SAVE_SWITCH_PIN, INPUT_PULLUP);
   pinMode(LOAD_SWITCH_PIN, INPUT_PULLUP);
@@ -229,10 +229,10 @@ void setup() {
   dac_2.begin();
   tcaselect(3);
   dac_3.begin();
-  tcaselect(4);
+  tcaselect(5);
   mcp.begin_I2C();
   
-  // Set 14 bits Hardware PWM for pitchbender and 8 note voltage outputs
+  // Set up and pull low 14 bits Hardware PWM for note frequencies, velocities, pitchbender, and gates
   analogWriteResolution(14);
   for (int i = 0; i < NUM_VOICES; i++) {
     pinMode(notePin[i], OUTPUT); // Note 01
@@ -246,7 +246,7 @@ void setup() {
   analogWriteFrequency(33, 9155.27);
   digitalWrite(33, LOW);
   
-	tcaselect(4);
+	tcaselect(5);
 	for (int i = 0; i < 8; i++) {
   	mcp.pinMode(i, OUTPUT);
   	mcp.digitalWrite(i, LOW);	
@@ -299,68 +299,91 @@ void loop() {
       if (ccNumber == CC_TEMPO) {
         midiTempo = ccValue;
       }
-      eighthNoteDuration = (60 / midiTempo) * 1000 / 2;
-      sixteenthNoteDuration = (60 / midiTempo) * 1000 / 4;
+    //  eighthNoteDuration = (60 / midiTempo) * 1000 / 2;
+    //  sixteenthNoteDuration = (60 / midiTempo) * 1000 / 4;
     }
     
-    //------------------------ Read MIDI controller 70-79, write to DACs
+    //------------------------ Read MIDI controller 70-83, write to DACs
     if (MIDI.getType() == midi::ControlChange && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t ccNumber = MIDI.getData1();
       uint8_t ccValue = MIDI.getData2();
-      switch (ccNumber) {
-        case 70:
-				tcaselect(0);
-        dac_0.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
-        CCValue[0] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 71:
-        tcaselect(0);
-      	dac_0.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
-        CCValue[1] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 72:
-        tcaselect(1);
-      	dac_1.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
-        CCValue[2] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 73:
-        tcaselect(1);
-      	dac_1.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
-        CCValue[3] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 74:
-        tcaselect(1);
-      	dac_1.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
-        CCValue[4] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 75:
-        tcaselect(1);
-      	dac_1.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
-        CCValue[5] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 76:
-        tcaselect(2);
-      	dac_2.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
-        CCValue[6] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 77:
-        tcaselect(2);
-      	dac_2.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
-        CCValue[7] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 78:
-        tcaselect(2);
-      	dac_2.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
-        CCValue[8] = map(ccValue, 0, 127, 0, 4095);
-        break;
-        case 79:
-        tcaselect(2);
-      	dac_2.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
-        CCValue[9] = map(ccValue, 0, 127, 0, 4095);
-        break;
+      if (ccNumber > 69 && ccNumber < 84) {
+        switch (ccNumber) {
+          case 70:
+				  tcaselect(0);
+          dac_0.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+          CCValue[0] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 71:
+          tcaselect(0);
+      	  dac_0.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+          CCValue[1] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 72:
+          tcaselect(1);
+      	  dac_1.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+          CCValue[2] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 73:
+          tcaselect(1);
+      	  dac_1.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+          CCValue[3] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 74:
+          tcaselect(1);
+      	  dac_1.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+          CCValue[4] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 75:
+          tcaselect(1);
+      	  dac_1.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+          CCValue[5] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 76:
+          tcaselect(2);
+      	  dac_2.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+          CCValue[6] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 77:
+          tcaselect(2);
+      	  dac_2.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+          CCValue[7] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 78:
+          tcaselect(2);
+      	  dac_2.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+          CCValue[8] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 79:
+          tcaselect(2);
+      	  dac_2.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+          CCValue[9] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 80:
+          tcaselect(3);
+      	  dac_3.setChannelValue(MCP4728_CHANNEL_A, map(ccValue, 0, 127, 0, 4095));
+          CCValue[10] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 81:
+          tcaselect(3);
+      	  dac_3.setChannelValue(MCP4728_CHANNEL_B, map(ccValue, 0, 127, 0, 4095));
+          CCValue[11] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 82:
+          tcaselect(3);
+      	  dac_3.setChannelValue(MCP4728_CHANNEL_C, map(ccValue, 0, 127, 0, 4095));
+          CCValue[12] = map(ccValue, 0, 127, 0, 4095);
+          break;
+          case 83:
+          tcaselect(3);
+      	  dac_3.setChannelValue(MCP4728_CHANNEL_D, map(ccValue, 0, 127, 0, 4095));
+          CCValue[13] = map(ccValue, 0, 127, 0, 4095);
+          break;
+        }
       }
     }
 
+    // ------------------------------------------------------------- Save/Load presets
     // Check if the save switch is pressed
     saveSwitch.update();
     if (saveSwitch.fallingEdge() && !loadInProgress) {
@@ -391,6 +414,11 @@ void loop() {
       EEPROM.write(EEPROM_ADDRESS + 7, CCValue[7]);
       EEPROM.write(EEPROM_ADDRESS + 8, CCValue[8]);
       EEPROM.write(EEPROM_ADDRESS + 9, CCValue[9]);
+      tcaselect(3);
+      EEPROM.write(EEPROM_ADDRESS + 10, CCValue[10]);
+      EEPROM.write(EEPROM_ADDRESS + 11, CCValue[11]);
+      EEPROM.write(EEPROM_ADDRESS + 12, CCValue[12]);
+      EEPROM.write(EEPROM_ADDRESS + 13, CCValue[13]);
       saveInProgress = false;
     }
 
@@ -421,6 +449,15 @@ void loop() {
       dac_2.setChannelValue(MCP4728_CHANNEL_C, value);
       value = EEPROM.read(EEPROM_ADDRESS + 9);
       dac_2.setChannelValue(MCP4728_CHANNEL_D, value);
+      tcaselect(3);
+      value = EEPROM.read(EEPROM_ADDRESS + 10);
+      dac_3.setChannelValue(MCP4728_CHANNEL_A, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 11);
+      dac_3.setChannelValue(MCP4728_CHANNEL_B, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 12);
+      dac_3.setChannelValue(MCP4728_CHANNEL_C, value);
+      value = EEPROM.read(EEPROM_ADDRESS + 13);
+      dac_3.setChannelValue(MCP4728_CHANNEL_D, value);
       loadInProgress = false;
     }
 
@@ -436,8 +473,8 @@ void loop() {
   }
 
   // ---------------------------------------------------------------------------------------------------- Write
-    // ----------------------- Write gates and velocity outputs, bend notes 
-    tcaselect(4);
+    // ----------------------- Write notes, velocities, and gates
+    tcaselect(5);
     for (int i = 0; i < NUM_VOICES; i++) {
       // Calculate pitchbender factor
       int midiNoteVoltage = noteVolt[voices[i].midiNote];
@@ -457,5 +494,5 @@ void loop() {
     }
 
   //-------------------------- Fill Arpeggio buffer
-  fillArpNotes();
+  //fillArpNotes();
 }
