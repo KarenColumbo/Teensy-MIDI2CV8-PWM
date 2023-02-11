@@ -19,8 +19,6 @@
 #define CC_TEMPO 5
 #define A4 440
 
-const int SAVE_SWITCH_PIN = 2;
-const int LOAD_SWITCH_PIN = 3;
 const int EEPROM_ADDRESS = 0;
 const int DEBOUNCE_DELAY = 20;
 const int THRESHOLD = 3000;
@@ -42,6 +40,11 @@ uint16_t eighthNoteDuration = 0;
 uint16_t sixteenthNoteDuration = 0;
 const int notePin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
 const int veloPin[8] = {10, 11, 12, 13, 14, 15, 18, 19};
+const int SAVE_SWITCH_PIN = 24;
+const int LOAD_SWITCH_PIN = 25;
+// I2C pins: 16, 17
+// Pitchbender pin: 33
+
 int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // --------------------------------- 12 bit Velocity Voltages - linear 
@@ -218,15 +221,15 @@ void setup() {
   
   Wire.begin(200000);
   tcaselect(0);
-  dac_0.begin(0x60);
+  dac_0.begin();
   tcaselect(1);
-  dac_1.begin(0x60);
+  dac_1.begin();
   tcaselect(2);
-  dac_2.begin(0x60);
+  dac_2.begin();
   tcaselect(3);
-  dac_3.begin(0x60);
+  dac_3.begin();
   tcaselect(4);
-  mcp.begin_I2C(0x20);
+  mcp.begin_I2C();
   
   // Set 14 bits Hardware PWM for pitchbender and 8 note voltage outputs
   analogWriteResolution(14);
