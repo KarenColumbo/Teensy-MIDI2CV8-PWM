@@ -12,23 +12,13 @@
 #include <EEPROM.h>
 #include "Bounce2.h"
 
+// MIDI stuff
 #define NUM_VOICES 8
 #define MIDI_CHANNEL 1
 #define PITCH_POS 2
 #define PITCH_NEG -2
 #define CC_TEMPO 5
 #define A4 440
-
-const int EEPROM_ADDRESS = 0;
-const int DEBOUNCE_DELAY = 20;
-const int THRESHOLD = 3000;
-
-Bounce saveSwitch = Bounce();
-Bounce loadSwitch = Bounce();
-unsigned long startTime = 0;
-bool saveInProgress = false;
-bool loadInProgress = false;
-
 uint8_t midiTempo;
 uint8_t midiController[10];
 uint16_t benderValue = 0;
@@ -38,16 +28,27 @@ int numArpNotes = 0;
 int arpNotes[NUM_VOICES];
 uint16_t eighthNoteDuration = 0;
 uint16_t sixteenthNoteDuration = 0;
+
+// Save/Load switches
+const int EEPROM_ADDRESS = 0;
+const int DEBOUNCE_DELAY = 20;
+const int THRESHOLD = 3000;
+Bounce saveSwitch = Bounce();
+Bounce loadSwitch = Bounce();
+unsigned long startTime = 0;
+bool saveInProgress = false;
+bool loadInProgress = false;
+int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+// GPIO Pins
 const int notePin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
 const int veloPin[8] = {10, 11, 12, 13, 14, 15, 18, 19};
 const int SAVE_SWITCH_PIN = 24;
 const int LOAD_SWITCH_PIN = 25;
-// I2C pins: 16, 17
-// Pitchbender pin: 33
+// I2C pins: ----------------> 16, 17
+// Pitchbender pin: ---------> 33
 
-int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-// --------------------------------- 12 bit Velocity Voltages - linear 
+// --------------------------------- 14 bit Velocity Voltages - linear 
 const float veloVoltLin[128]={
   0, 128, 256, 384, 512, 640, 768, 896, 
   1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, 
@@ -252,11 +253,11 @@ void setup() {
 	}
 }
 
-// *****************************************************************************************************
-//******************************************** MAIN LOOP *********************************************** 
+// ********************************************************************************************************
+// ********************************************************************************************** MAIN LOOP 
 void loop() {
   
-  // ---------------------- Read ------------------------------------------------------------------------ 
+  // ------------------------------------------------------------------------------------------------- Read 
   if (MIDI.read()) {
 
     // ------------------------Check for and buffer incoming Note On message
@@ -434,8 +435,7 @@ void loop() {
     }
   }
 
-  // ---------------------------------- Write -------------------------------------------------------------------- 
-
+  // ---------------------------------------------------------------------------------------------------- Write
     // ----------------------- Write gates and velocity outputs, bend notes 
     tcaselect(4);
     for (int i = 0; i < NUM_VOICES; i++) {
