@@ -4,6 +4,10 @@
 
 ## History:
 
+### Feb 11th '23
+- Built in a subroutine that saves/loads CC values 70-79 to/from EEPROM. Included "Bounce2.h", must find 2 GPIO pins left to connect momentary load and save switches.
+- Some code "prettifying", yet there's still a long and winding road ahead of me …
+
 ### Feb 10th '23
 
 - Spliced in an Adafruit TCA9548A I2C multiplexer to take care of the MCP4728s and the MCP23017 without having to individually flash addresses to the 4728s.
