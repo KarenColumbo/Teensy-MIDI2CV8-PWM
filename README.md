@@ -5,7 +5,7 @@
 ## History:
 
 ### Feb 11th '23
-- Built in a subroutine that saves/loads CC values 70-79 to/from EEPROM. Included "Bounce2.h", must find 2 GPIO pins left to connect momentary load and save switches.
+- Built in a subroutine that saves/loads CC values 70-79 to/from EEPROM. Included "Bounce2.h", reads momentary load and save switch, threshold: 3 sec.
 - Some code "prettifying", yet there's still a long and winding road ahead of me …
 
 ### Feb 10th '23
