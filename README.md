@@ -4,6 +4,10 @@
 
 ## History:
 
+### Feb 12th '23
+
+- Some major change: I decided to rewrite the note frequencies output to output a clock and a control voltage signal to control a DCO à la Juno 106. We'll see :)
+
 ### Feb 11th '23
 
 - Commented out "Arpeggiator" - not sure if I'm on the right track with my idea - gotta jot it down first.
