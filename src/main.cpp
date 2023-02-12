@@ -38,10 +38,10 @@ Bounce loadSwitch = Bounce();
 unsigned long startTime = 0;
 bool saveInProgress = false;
 bool loadInProgress = false;
-int CCValue[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int CCValue[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // GPIO Pins
-const int notePin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
+const int controlPin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
 const int veloPin[8] = {10, 11, 12, 13, 14, 15, 18, 19};
 const int SAVE_SWITCH_PIN = 24;
 const int LOAD_SWITCH_PIN = 25;
@@ -90,7 +90,6 @@ const unsigned int noteVolt[73] = {
   16383
   };
 
-// ------------------------------------- Voice buffer init 
 struct Voice {
   unsigned long noteAge;
   uint8_t midiNote;
@@ -102,6 +101,8 @@ struct Voice {
   uint8_t prevNote;
   uint16_t bentNote;
   uint16_t bentNoteFreq;
+  unsigned long lastTime;
+  bool clockState;
 };
 
 Voice voices[NUM_VOICES];
@@ -118,7 +119,8 @@ void initializeVoices() {
     voices[i].prevNote = 0;
     voices[i].bentNote = 0x2000;
     voices[i].bentNoteFreq = 0x2000;
-  
+    voices[i].lastTime = 0;
+    voices[i].clockState = false;
   }
 }
 
@@ -189,7 +191,7 @@ void noteOff(uint8_t midiNote) {
 // ------------------------------------ Initialize multiplexer, 4728s and 23017
 TCA9548 tca = TCA9548(0x70);
 Adafruit_MCP4728 dac_0, dac_1, dac_2, dac_3, dac_4;
-Adafruit_MCP23X17 mcp;
+Adafruit_MCP23X17 mcp_1, mcp_2;
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -230,14 +232,16 @@ void setup() {
   tcaselect(3);
   dac_3.begin();
   tcaselect(5);
-  mcp.begin_I2C();
+  mcp_1.begin_I2C();
+  tcaselect(6);
+  mcp_2.begin_I2C();
   
   // Set up and pull low 14 bits Hardware PWM for note frequencies, velocities, pitchbender, and gates
   analogWriteResolution(14);
   for (int i = 0; i < NUM_VOICES; i++) {
-    pinMode(notePin[i], OUTPUT); // Note 01
-    analogWriteFrequency(notePin[i], 9155.27);
-    digitalWrite(notePin[i], LOW);
+    pinMode(controlPin[i], OUTPUT); // Note 01
+    analogWriteFrequency(controlPin[i], 9155.27);
+    digitalWrite(controlPin[i], LOW);
     pinMode(veloPin[i], OUTPUT); // Velocity 01
     digitalWrite(veloPin[i], LOW);
     pinMode(veloPin[i], OUTPUT); // Velocity 02
@@ -248,8 +252,8 @@ void setup() {
   
 	tcaselect(5);
 	for (int i = 0; i < 8; i++) {
-  	mcp.pinMode(i, OUTPUT);
-  	mcp.digitalWrite(i, LOW);	
+  	mcp_1.pinMode(i, OUTPUT);
+  	mcp_1.digitalWrite(i, LOW);	
 	}
 }
 
@@ -473,25 +477,58 @@ void loop() {
   }
 
   // ---------------------------------------------------------------------------------------------------- Write
-    // ----------------------- Write notes, velocities, and gates
-    tcaselect(5);
-    for (int i = 0; i < NUM_VOICES; i++) {
-      // Calculate pitchbender factor
-      int midiNoteVoltage = noteVolt[voices[i].midiNote];
-      double semitones = (double)benderValue / (double)16383 * 2.0;
-      double factor = pow(2.0, semitones / 12.0);
-      voices[i].bentNote = midiNoteVoltage * factor;
-      voices[i].bentNoteFreq = midiNoteFrequency[i] * factor;
-      if (voices[i].bentNote < 0) {
-        voices[i].bentNote = 0;
-      }
-      if (voices[i].bentNote > 16383) {
-        voices[i].bentNote = 16383;
-      }
-      analogWrite(notePin[i], voices[i].bentNote);
-      analogWrite(veloPin[i],veloVoltLin[voices[i].velocity]);
-      mcp.digitalWrite(i, voices[i].noteOn ? HIGH : LOW);
-    }
+  //  // ----------------------- Write notes, velocities, and gates
+  //  tcaselect(5);
+  //  for (int i = 0; i < NUM_VOICES; i++) {
+  //    // Calculate pitchbender factor
+  //    int midiNoteVoltage = noteVolt[voices[i].midiNote];
+  //    double semitones = (double)benderValue / (double)16383 * 2.0;
+  //    double factor = pow(2.0, semitones / 12.0);
+  //    voices[i].bentNote = midiNoteVoltage * factor;
+  //    voices[i].bentNoteFreq = midiNoteFrequency[i] * factor;
+  //    if (voices[i].bentNote < 0) {
+  //      voices[i].bentNote = 0;
+  //    }
+  //    if (voices[i].bentNote > 16383) {
+  //      voices[i].bentNote = 16383;
+  //    }
+  //    analogWrite(controlPin[i], voices[i].bentNote);
+  //    analogWrite(veloPin[i],veloVoltLin[voices[i].velocity]);
+  //    mcp_1.digitalWrite(i, voices[i].noteOn ? HIGH : LOW);
+  //  }
+  for (int i = 0; i < NUM_VOICES; i++) {
+  // Calculate pitchbender factor
+  int midiNoteVoltage = noteVolt[voices[i].midiNote];
+  double semitones = (double)benderValue / (double)16383 * 2.0;
+  double factor = pow(2.0, semitones / 12.0);
+  voices[i].bentNote = midiNoteVoltage * factor;
+  voices[i].bentNoteFreq = midiNoteFrequency[i] * factor;
+  if (voices[i].bentNote < 0) {
+    voices[i].bentNote = 0;
+  }
+  if (voices[i].bentNote > 16383) {
+    voices[i].bentNote = 16383;
+  }
+
+  // Generate a square wave with the desired frequency
+  double period = 1.0 / voices[i].bentNoteFreq;
+  double halfPeriod = period / 2.0;
+  unsigned long currentTime = millis();
+  if (currentTime - voices[i].lastTime > halfPeriod) {
+    voices[i].lastTime = currentTime;
+    voices[i].clockState = !voices[i].clockState;
+  }
+  tcaselect(6);
+  mcp_2.digitalWrite(i, voices[i].clockState ? HIGH : LOW);
+
+  // Calculate the control voltage
+  double controlVoltage = map(voices[i].bentNote, 0, 16384, 0, 3.3);
+  analogWrite(controlPin[i], controlVoltage);
+
+  // Write the velocity voltage
+  analogWrite(veloPin[i],veloVoltLin[voices[i].velocity]);
+  mcp_1.digitalWrite(i, voices[i].noteOn ? HIGH : LOW);
+  }
 
   //-------------------------- Fill Arpeggio buffer
   //fillArpNotes();
