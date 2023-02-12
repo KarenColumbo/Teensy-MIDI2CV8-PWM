@@ -30,21 +30,22 @@ uint16_t eighthNoteDuration = 0;
 uint16_t sixteenthNoteDuration = 0;
 
 // Save/Load switches
-const int EEPROM_ADDRESS = 0;
-const int DEBOUNCE_DELAY = 20;
-const int THRESHOLD = 3000;
-Bounce saveSwitch = Bounce();
-Bounce loadSwitch = Bounce();
-unsigned long startTime = 0;
-bool saveInProgress = false;
-bool loadInProgress = false;
+//const int EEPROM_ADDRESS = 0;
+//const int DEBOUNCE_DELAY = 20;
+//const int THRESHOLD = 3000;
+//Bounce saveSwitch = Bounce();
+//Bounce loadSwitch = Bounce();
+//unsigned long startTime = 0;
+//bool saveInProgress = false;
+//bool loadInProgress = false;
 int CCValue[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // GPIO Pins
 const int controlPin[8] = {2, 3, 4, 5, 6, 9, 22, 23};
 const int veloPin[8] = {10, 11, 12, 13, 14, 15, 18, 19};
-const int SAVE_SWITCH_PIN = 24;
-const int LOAD_SWITCH_PIN = 25;
+const int notePin[8] = {7, 8, 24, 25, 28, 29, 36, 37};
+//const int SAVE_SWITCH_PIN = 24;
+//const int LOAD_SWITCH_PIN = 25;
 // I2C pins: ----------------> 16, 17
 // Pitchbender pin: ---------> 33
 
@@ -210,12 +211,12 @@ void setup() {
 //    arpNotes[i] = -1;
 //  }
 
-  pinMode(SAVE_SWITCH_PIN, INPUT_PULLUP);
-  pinMode(LOAD_SWITCH_PIN, INPUT_PULLUP);
-  saveSwitch.attach(SAVE_SWITCH_PIN);
-  loadSwitch.attach(LOAD_SWITCH_PIN);
-  saveSwitch.interval(DEBOUNCE_DELAY);
-  loadSwitch.interval(DEBOUNCE_DELAY);
+  //pinMode(SAVE_SWITCH_PIN, INPUT_PULLUP);
+  //pinMode(LOAD_SWITCH_PIN, INPUT_PULLUP);
+  //saveSwitch.attach(SAVE_SWITCH_PIN);
+  //loadSwitch.attach(LOAD_SWITCH_PIN);
+  //saveSwitch.interval(DEBOUNCE_DELAY);
+  //loadSwitch.interval(DEBOUNCE_DELAY);
 
   // ****************** WARNING: Connect DACs VDD to 5 volts!!! 
 
@@ -386,7 +387,7 @@ void loop() {
         }
       }
     }
-
+/*
     // ------------------------------------------------------------- Save/Load presets
     // Check if the save switch is pressed
     saveSwitch.update();
@@ -464,7 +465,7 @@ void loop() {
       dac_3.setChannelValue(MCP4728_CHANNEL_D, value);
       loadInProgress = false;
     }
-
+*/
     // ---------------------------- Read and store sustain pedal status
     if (MIDI.getType() == midi::ControlChange && MIDI.getData1() == 64 && MIDI.getChannel() == MIDI_CHANNEL) {
       uint8_t sustainPedal = MIDI.getData2();
@@ -524,6 +525,7 @@ void loop() {
   // Calculate the control voltage
   double controlVoltage = map(voices[i].bentNote, 0, 16384, 0, 3.3);
   analogWrite(controlPin[i], controlVoltage);
+  analogWrite(notePin[i], voices[i].bentNote);
 
   // Write the velocity voltage
   analogWrite(veloPin[i],veloVoltLin[voices[i].velocity]);
