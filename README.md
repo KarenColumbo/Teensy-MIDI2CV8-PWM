@@ -7,6 +7,7 @@
 ### Feb 12th '23
 
 - Some major change: I decided to rewrite the note frequencies output to output a clock and a control voltage signal to control a DCO à la Juno 106. We'll see :)
+- Had to disable the Load/Save routines, though - not enough pins left, maybe outsource velocity CVs to another 23017, they're 8 bit after all.
 
 ### Feb 11th '23
 
