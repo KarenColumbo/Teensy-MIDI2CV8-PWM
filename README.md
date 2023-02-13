@@ -1,8 +1,12 @@
-# Teensy-MIDI2CV8 Version a0.2.0
+# Teensy-MIDI2CV8 Version a0.3.1
 ## A naive take on an 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
 ### ********** Still UNTESTED! Do NOT use, this is just a "travelogue"! ***********
 
 ## History:
+
+### Feb 13th '23
+
+- Debugging piece by piece in another secret repo :) MIDI buffer note stealing and sustain logic working perfectly. Will swap the "modules" in piece by piece.
 
 ### Feb 12th '23
 
