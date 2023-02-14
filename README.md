@@ -1,4 +1,4 @@
-# Teensy-MIDI2CV8 Version a0.5
+# Teensy-MIDI2CV8 Version a0.6
 ## A naive take on an 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
 ### ********** Still UNTESTED! Do NOT use, this is just a "travelogue"! ***********
 
@@ -8,7 +8,7 @@
 
 - Outsourcing the "modules" to https://github.com/KarenColumbo/Teensy-MIDICV8_testlab for extensive testing, then reassembling them here.
 
-- Sustain logic almost working! Had approx. a gazillion iterations/variations including "sustain buffer" and flags and subroutines, even thought about some interrupt story. In the end it was just a matter of calling two subroutines "sustainNotes()" and "unsustainNotes()" at the right time(s). Still some logic to work out, when notes are being held when sustain pedal is off.
+- Sustain logic working! Had approx. a gazillion iterations/variations including "sustain buffer" and flags and subroutines, even thought about some interrupt story. In the end it was just a matter of calling two subroutines "sustainNotes()" and "unsustainNotes()" at the right time(s). 
 
 ### Feb 13th '23
 
