@@ -6,7 +6,7 @@
 
 ### Feb 26th '23
 
-- Got sidetracked with another go: I decided to put out the core triangle waves for an analog VCO through a couple of AD9833 DDS ICs (easily available as boards at the usual mass product websites: https://github.com/KarenColumbo/Teensy-DCO-progress
+- Got sidetracked with another go: I decided to put out the core triangle waves for an analog VCO through a couple of AD9833 DDS ICs (easily available as boards at the usual mass product websites). Take a peek at that repo: https://github.com/KarenColumbo/Teensy-DCO-progress
 - This works, polyphonic portamento included, so I will stick with it for a while.
 - Will the good things that work there include here in the future!
 
