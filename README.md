@@ -4,6 +4,9 @@
 
 ## History:
 
+### Mar 3rd '23
+- Read a tiny wee bit into that "PDM" matter. Concocted some test routines by fiddling with fragments i found. Still ... no time for anything besides this gig atm. But anything helps when facing this "chip crisis" and unobtainable 16 bit DACs. "Clean" CVs with simple PWM pins through simple R/C low-pass filters ... that'd be the ticket ...
+
 ### Feb 26th '23
 
 - Got sidetracked with another go: I decided to put out the core triangle waves for an analog VCO through a couple of AD9833 DDS ICs (easily available as boards at the usual mass product websites). Take a peek at that repo: https://github.com/KarenColumbo/Teensy-DCO-progress
