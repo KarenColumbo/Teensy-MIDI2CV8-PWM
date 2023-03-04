@@ -4,6 +4,10 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+/*
+Note that the PDM output signal requires a low-pass filter to remove the high-frequency noise introduced by the delta-sigma modulation process. The cutoff frequency of the filter should be set to half the sample rate of the PDM output signal. In this example, the sample rate is set to 44100 Hz, so the cutoff frequency should be set to 22050 Hz.
+*/
+
 // Define the audio output object for PDM output
 AudioOutputPDM pdm;
 
