@@ -8,6 +8,22 @@
 Note that the PDM output signal requires a low-pass filter to remove the high-frequency noise introduced by the delta-sigma modulation process. The cutoff frequency of the filter should be set to half the sample rate of the PDM output signal. In this example, the sample rate is set to 44100 Hz, so the cutoff frequency should be set to 22050 Hz.
 */
 
+/*
+void generatePDM(uint16_t audio_sample, uint8_t oversampling_ratio, uint8_t gain, uint8_t *pdm_buffer) {
+  // Calculate the PDM pulse density
+  uint16_t pdm_density = audio_sample * oversampling_ratio * gain / 32768;
+
+  // Generate the PDM bitstream
+  for (int i = 0; i < oversampling_ratio; i++) {
+    if (pdm_density > (i + 1) * 32768 / oversampling_ratio) {
+      pdm_buffer[i] = 0xFF;
+    } else {
+      pdm_buffer[i] = 0x00;
+    }
+  }
+}
+*/
+
 // Define the audio output object for PDM output
 AudioOutputPDM pdm;
 
