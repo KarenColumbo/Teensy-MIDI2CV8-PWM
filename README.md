@@ -1,5 +1,5 @@
 # Teensy-MIDI2CV8 Version a0.6
-## A naive take on an 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
+## A PWM-based 8-voices polyphonic MIDI to CV program for Teensy 4.1. 
 ### ********** Still UNTESTED! Do NOT use, this is just a "travelogue"! ***********
 
 ## History:
